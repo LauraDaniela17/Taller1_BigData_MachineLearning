@@ -1,0 +1,51 @@
+---
+title: "Taller 1 BDML"
+author: Zeneth Olivero Tapias, Cristian Felipe Muñoz Guerrero, Laura Daniela Torres
+  Diaz, Vivian Cabanzo Fernandez
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	fig.height = 6,
+	fig.width = 10,
+	message = FALSE,
+	warning = TRUE, 
+	tidy = TRUE,               
+  tidy.opts = list(width.cutoff = 60)  
+)
+
+if (!require("pacman")) install.packages("pacman")
+library(pacman)
+pacman::p_load(rvest, dplyr, tidyr, readr, janitor, purrr, skimr, tidyverse)
+```
+
+## Weebscraping
+
+```{r cars}
+urls <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_", 1:10, ".html")
+
+funcion_para_leer_tablas <- function(a) {
+  pagina <- read_html(a)
+  tabla_html <- html_elements(pagina, "table")[[1]]
+  data <- html_table(tabla_html, trim = TRUE)
+  data <- data %>% clean_names() %>% type_convert()
+  return(data)
+}
+
+data_completa <- map_dfr(urls, funcion_para_leer_tablas)
+
+write_csv(data_completa, "data.csv")
+
+```
+
+X
+
+```{r}
+
+
+
+```
