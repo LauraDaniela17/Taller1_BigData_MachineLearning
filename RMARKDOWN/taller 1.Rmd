@@ -78,7 +78,7 @@ names(data_completa)
 head(data_completa)
 # tail para ver las ultimas 
 tail(data_completa)
-
+ 
 
 # Análisis a nivel individuo:
 
