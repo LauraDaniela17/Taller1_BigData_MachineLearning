@@ -46,6 +46,15 @@ X
 
 ```{r}
 
-
+colnames(data_completa)
 
 ```
+
+
+```{r}
+urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
+
+data_diccionario <- funcion_para_leer_tablas(urls2)
+View(data_diccionario)
+```
+
