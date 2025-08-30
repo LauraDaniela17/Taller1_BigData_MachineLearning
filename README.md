@@ -14,9 +14,9 @@ El análisis incluye:
 El repositorio sigue la plantilla solicitada en el enunciado:
 - Documentos complementarios  ---->    # Datos del DANE_PobrezaMonetaria
 - RMARKDOW   ---->    # Carpeta con los scripts, limpieza de datos y Formulación del Taller
-- slides/ ---->              # Carpeta con las presentaciones en PDF
-- output/      ---->        # Carpeta donde se guardan tablas y gráficos finales
-- scripts/          ---->   # Carpeta con el código en R
+- Slides ---->              # Carpeta con las presentaciones en PDF
+- Output      ---->        # Carpeta donde se guardan tablas y gráficos finales
+- Scripts          ---->   # Carpeta con el código en R
 
 
 ## 🔄 Cómo correr el proyecto
