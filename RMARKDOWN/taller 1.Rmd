@@ -76,7 +76,7 @@ str(data_completa) #Vemos que hay una gran cantidad de NA y que los tipos mas co
 names(data_completa) 
 # head para ver las primeras observaciones
 head(data_completa)
-# tail para ver las ultimas 
+# tail para ver las ultimas   
 tail(data_completa)
  
 
