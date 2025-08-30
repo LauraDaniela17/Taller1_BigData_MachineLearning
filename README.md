@@ -33,10 +33,10 @@ El repositorio sigue la plantilla solicitada en el enunciado:
 - Los modelos más complejos (polinomios, LASSO, Random Forest) predicen mejor que los modelos lineales simples.
 
 ## 👥 Equipo
-- 
--
--
--
+- Cristian Felipe Muñoz Guerrero 
+- Zeneth Olivero Tapia
+- Laura Daniela Torres Diaz
+- Vivian Cabanzo Fernandez
 Cada miembro aportó al menos cinco contribuciones al repositorio.
 
 ## 📚 Referencias
