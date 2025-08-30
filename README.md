@@ -37,6 +37,7 @@ El repositorio sigue la plantilla solicitada en el enunciado:
 - Zeneth Olivero Tapia
 - Laura Daniela Torres Diaz
 - Vivian Cabanzo Fernandez
+
 Cada miembro aportó al menos cinco contribuciones al repositorio.
 
 ## 📚 Referencias
