@@ -1,6 +1,6 @@
 ---
 title: "Taller 1 BDML"
-author: Zeneth Olivero Tapias, Cristian Felipe Muñoz Guerrero, Laura Daniela Torres
+author: Zeneth Olivero Tapia, Cristian Felipe Muñoz Guerrero, Laura Daniela Torres
   Diaz, Vivian Cabanzo Fernandez
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -141,35 +141,40 @@ str(data_completa$mes)
 
 ## Manipulación y limpieza de datos
 
-En este apartado eliminamos todas las observaciones que en la variable de edad marcaron un valor inferior a 18 años, así como la eliminación de las variables que consideramos no son de interés para el estudio propuesto.
+En este apartado eliminamos todas las observaciones que en la variable de edad marcaron un valor inferior a 18 años, así como la eliminación de las personas no ocupadas tal como lo establece el estudio propuesto.
 
+Para esto se obtuvieron un total de 16.542 observaciones
 
+Ademas al ser la variable independiente el ingreso por hora 
+
+Por otro lado tambien se realiza una manipulación de los datos en NA
+
+se filtra por 
 
 ```{r}
-# Eliminamos observaciones inferiores a los 18 años de edad
+## Eliminamos observaciones inferiores a los 18 años de edad
 data_filter <- data_completa%>%
-  filter(age >= 18)
+  filter(age >= 18)%>%filter(ocu==1)
 # Revisamos nuevamente la cantidad de observaciones
 Obs_filter <- nrow(data_filter) 
-Obs_filter #24.568 observaciones
+Obs_filter #16.542 observaciones
 
-# Elimnamos variables que no sean de interes 
 
-cclasnr11	
-cclasnr2	
-cclasnr3	
-cclasnr4	
-cclasnr5	
-cclasnr6	
-cclasnr7	
+## Manejo de datos faltantes y revisión:
+# Con los datos filtrados nuevamente generamos un data frame de datos faltantes y seleccionamos las variables de inteterés:
+data_filter_sub<- data_filter%>% select(sex, age, ocu, oficio, 
+                                        formal, size_firm, max_educ_level, y_total_m_ha,relab,p6240)
+data_miss <- skim(data_filter_sub) %>% select( skim_variable, n_missing)
 
-# NA
+## Imputaciión a 0 cuando la pregunta p6240 es 3 y 4.
+data_filter<- data_filter %>%
+  mutate(salario_imputado_h = ifelse(is.na(y_total_m_ha) & p6240%in% c(3, 6), 0, y_total_m_ha))
 ```
 
 ## Descriptivos
 
 
 ```{r}
-
+class(data_completa$p6430)
 ```
 
