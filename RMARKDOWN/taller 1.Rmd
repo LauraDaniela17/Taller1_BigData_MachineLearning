@@ -6,7 +6,14 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
+## Configuración inicial
+
+En esta sección se establece la configuración inicial y las librerías necesarias.
+
 ```{r setup, include=FALSE}
+
+# Configuración de knitr y carga de paquetes para análisis, limpieza y manipulación de datos
+
 knitr::opts_chunk$set(
 	echo = TRUE,
 	fig.align = "center",
@@ -18,34 +25,151 @@ knitr::opts_chunk$set(
   tidy.opts = list(width.cutoff = 60)  
 )
 
+# Instalar y cargar pacman (gestor de paquetes) y otras librerías para análisis de datos
+
 if (!require("pacman")) install.packages("pacman")
 library(pacman)
-pacman::p_load(rvest, dplyr, tidyr, readr, janitor, purrr, skimr, tidyverse)
+pacman::p_load(rvest, #Web scrapping
+               dplyr, #Manipulación de datos
+               tidyr, #Manipúlación de datos
+               readr, #Lectura de archivos csv
+               janitor, #Limpieza rapida 
+               purrr, #Programación funcional
+               skimr, #Resumén descriptivo
+               tidyverse, #Manipulación de datos
+               styler, #Estilo de código
+               corrplot) #Matrices de correlación
 ```
 
-## Weebscraping
+## Web scraping
+
+En este primer apartado extraemos los datos de la página: : https://ignaciomsarmiento.
+github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaciones
 
 ```{r cars}
+
+# Generamos URL: contiene un vector de 10 paginaciones
 urls <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_", 1:10, ".html")
 
 funcion_para_leer_tablas <- function(a) {
-  pagina <- read_html(a)
-  tabla_html <- html_elements(pagina, "table")[[1]]
-  data <- html_table(tabla_html, trim = TRUE)
-  data <- data %>% clean_names() %>% type_convert()
+  pagina <- read_html(a)  #Leer el html
+  tabla_html <- html_elements(pagina, "table")[[1]] #Estrae la primera página
+  data <- html_table(tabla_html, trim = TRUE)  #Convertir el html a data frame
+  data <- data %>% clean_names() %>% type_convert() #Limpiar nombres y cambiar tipos de datos
   return(data)
 }
 
-data_completa <- map_dfr(urls, funcion_para_leer_tablas)
-
-write_csv(data_completa, "data.csv")
+data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior para todas las 10 paginaciones 
 
 ```
 
-X
+## Revisión inicial de los datos
+
+Revisión incial de la estructuración de los datos; cantidad de observaciones, tipos de datos, nombre de variables, identificación de NA.
 
 ```{r}
 
+## Revisión inicial:
+# str para revisar la estructura de los datos
+str(data_completa) #Vemos que hay una gran cantidad de NA y que los tipos mas comunes de datos son character, integrer, y numeral
+# Names para identificar los nombres de todas las variables
+names(data_completa) 
+# head para ver las primeras observaciones
+head(data_completa)
+# tail para ver las ultimas   
+tail(data_completa)
+ 
 
+# Análisis a nivel individuo:
+
+#Revisamos cantidad de meses que hay en la base:
+n_meses <- data_completa %>%
+  summarise(total_meses = n_distinct(mes)) %>%
+  pull(total_meses)  #12 meses
+
+# Creamos el ID único para cada persona según la documentación de la GEIH
+data_completa<- data_completa %>%
+  mutate(id_individuo = paste(directorio, secuencia_p, orden, sep = "_"))
+
+
+# Quitar duplicados a nivel individuo-mes
+df_unicos <- data_completa %>%
+  distinct(id_individuo, mes)
+
+# Contar en cuántos meses aparece cada individuo
+individuos_completos <- df_unicos %>%
+  group_by(id_individuo) %>%
+  summarise(n_meses_individuo = n_distinct(mes), .groups = "drop") %>%
+  mutate(esta_en_todos = n_meses_individuo == n_meses)
+
+# Número total de individuos únicos
+total_individuos <- n_distinct(data_completa$id_individuo)
+
+# Número de individuos que aparecen en todos los meses
+n_en_todos <- sum(individuos_completos$esta_en_todos)
+
+#Resultados a nivel individuo
+list(
+  total_individuos = total_individuos, #32177 individuos
+  meses_totales = n_meses, #12 meses
+  individuos_en_todos_los_meses = n_en_todos #Ningún individuo se repite en ningún mes
+)
+
+
+# Revisamos valores faltantes:
+data_miss <- skim(data_completa) %>% select( skim_variable, n_missing)
+# Calculamnos número de observaciones para despues calcular el porcentaje de NA
+Obs <- nrow(data_completa) 
+Obs #32.177 observaciones
+#Porcentaje de observaciones faltantes
+data_miss<- data_miss %>% mutate(p_missing= n_missing/Obs)
+#Eliminar los que no tienen datos faltantes
+data_miss<- data_miss %>% filter(n_missing!= 0)
+
+# Revisar los datos faltantes gráficamente:
+
+ggplot(data_miss, aes(x = reorder(skim_variable, +p_missing) , y =  p_missing)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  coord_flip() +
+  labs(title = "NA por variable", x = "Variable", y = "Porcentaje de NA")+ 
+  theme(axis.text = element_text(size = 5))
+
+
+str(data_completa$mes)
+```
+
+
+## Manipulación y limpieza de datos
+
+En este apartado eliminamos todas las observaciones que en la variable de edad marcaron un valor inferior a 18 años, así como la eliminación de las variables que consideramos no son de interés para el estudio propuesto.
+
+
+
+```{r}
+# Eliminamos observaciones inferiores a los 18 años de edad
+data_filter <- data_completa%>%
+  filter(age >= 18)
+# Revisamos nuevamente la cantidad de observaciones
+Obs_filter <- nrow(data_filter) 
+Obs_filter #24.568 observaciones
+
+# Elimnamos variables que no sean de interes 
+
+cclasnr11	
+cclasnr2	
+cclasnr3	
+cclasnr4	
+cclasnr5	
+cclasnr6	
+cclasnr7	
+
+# NA
+```
+
+## Descriptivos
+
+
+```{r}
 
 ```
+
