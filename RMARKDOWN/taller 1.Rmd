@@ -23,7 +23,7 @@ library(pacman)
 pacman::p_load(rvest, dplyr, tidyr, readr, janitor, purrr, skimr, tidyverse)
 ```
 
-## Weebscraping
+## Webscraping
 
 ```{r cars}
 urls <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_", 1:10, ".html")
