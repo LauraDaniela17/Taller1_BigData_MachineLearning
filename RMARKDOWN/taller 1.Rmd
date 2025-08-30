@@ -160,21 +160,15 @@ Obs_filter <- nrow(data_filter)
 Obs_filter #16.542 observaciones
 
 
-## Manejo de datos faltantes
+## Manejo de datos faltantes y revisión:
 # Con los datos filtrados nuevamente generamos un data frame de datos faltantes y seleccionamos las variables de inteterés:
 data_filter_sub<- data_filter%>% select(sex, age, ocu, oficio, 
-                                        formal, size_firm, max_educ_level,y_ing_lab_m_ha, y_salary_m_hu, y_total_m_ha,relab,p6240)
-
-
-data_filter_sub%>%
-  filter(is.na(y_total_m_ha)) %>%              # 1. Seleccionar los missing
-  group_by(p6050) %>%                         # 2. Agrupar por oficio
-  summarise(n_missing = n(), .groups = "drop") %>% # 3. Contar NA por oficio
-  arrange(desc(n_missing))     
-
+                                        formal, size_firm, max_educ_level, y_total_m_ha,relab,p6240)
 data_miss <- skim(data_filter_sub) %>% select( skim_variable, n_missing)
 
-
+## Imputaciión a 0 cuando la pregunta p6240 es 3 y 4.
+data_filter<- data_filter %>%
+  mutate(salario_imputado_h = ifelse(is.na(y_total_m_ha) & p6240%in% c(3, 6), 0, y_total_m_ha))
 ```
 
 ## Descriptivos
