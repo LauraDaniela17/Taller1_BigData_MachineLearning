@@ -63,7 +63,7 @@ data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior par
 
 ```
 
-#Diccionario de datos
+#Diccionario de datos !!!!!!!!!!!!!!!!!!
 ```{r}
 urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 
