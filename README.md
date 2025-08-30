@@ -12,7 +12,7 @@ El análisis incluye:
 ## 📂 Estructura del repositorio
 
 El repositorio sigue la plantilla solicitada en el enunciado:
-- data_equipo_XX/     # Carpeta con los scripts y limpieza de datos
+- data_equipo_XX/  ---->     # Carpeta con los scripts y limpieza de datos
 - age_equipo_XX/      # Carpeta con los resultados del perfil edad-salario
 - gap_equipo_XX/      # Carpeta con los resultados de la brecha de género
 - pred_equipo_XX/     # Carpeta con los resultados de predicción
