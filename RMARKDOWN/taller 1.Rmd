@@ -178,3 +178,6 @@ data_filter<- data_filter %>%
 class(data_completa$p6430)
 ```
 
+```{r}
+zzz
+```
