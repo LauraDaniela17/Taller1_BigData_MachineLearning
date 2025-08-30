@@ -191,10 +191,4 @@ data_filter<- data_filter %>%
 class(data_completa$p6430)
 ```
 
-<<<<<<< HEAD
-```{r}
-zzz
-```
-=======
-#Validacion de datos faltantes
->>>>>>> edbb7e2484fc595e3fbd304111b06e3039f32e52
+
