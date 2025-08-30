@@ -12,14 +12,14 @@ El análisis incluye:
 ## 📂 Estructura del repositorio
 
 El repositorio sigue la plantilla solicitada en el enunciado:
-- data_equipo_XX/  ---->     # Carpeta con los scripts y limpieza de datos
-- age_equipo_XX/      # Carpeta con los resultados del perfil edad-salario
-- gap_equipo_XX/      # Carpeta con los resultados de la brecha de género
-- pred_equipo_XX/     # Carpeta con los resultados de predicción
-- slides/             # Carpeta con las presentaciones en PDF
-- output/             # Carpeta donde se guardan tablas y gráficos finales
-- scripts/            # Carpeta con el código en R
-- README.md           # Archivo de documentación 
+- data_equipo_XX/  ---->    # Carpeta con los scripts y limpieza de datos
+- age_equipo_XX/   ---->    # Carpeta con los resultados del perfil edad-salario
+- gap_equipo_XX/   ---->    # Carpeta con los resultados de la brecha de género
+- pred_equipo_XX/  ---->    # Carpeta con los resultados de predicción
+- slides/ ---->              # Carpeta con las presentaciones en PDF
+- output/      ---->        # Carpeta donde se guardan tablas y gráficos finales
+- scripts/          ---->   # Carpeta con el código en R
+
 
 ## 🔄 Cómo correr el proyecto
 1. Clonar el repositorio:
