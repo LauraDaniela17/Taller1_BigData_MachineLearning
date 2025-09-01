@@ -6,6 +6,18 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
+## 1 Intriducción
+
+La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos. Entender estos factores de edad, los estudios, el tiempo trabajado, la ocupación y el género en los ingresos permite no solo explicar las desigualdades en el mercado laboral, sino también buscar formas más justas y eficientes en la asignación de recursos. Por eso, esta presente investigación busca analizar cómo cambia el ingreso en edad – salario, la brecha salarial de género y la ejecución de diversos modelos de predicción de ingresos en Bogotá, haciendo uso de datos sobre la población ocupada.
+
+La fuente de información tomada es la Gran Encuesta Integrada de Hogares (GEIH) 2018, elaborada por el DANE, elaboramos una muestra de personas que viven en Bogotá. Es una encuesta adecuada para el propósito del análisis, ya que incluye datos claves como el ingreso laboral, caracterización, demográficas y condiciones laborales. Esto nos permite hacer uso de variables para estimaciones que reflejan las diferencias observables entre individuos como los patrones generales del mercado laboral.
+
+En el primero componente, nos enfocamos en el análisis en el perfil edad – salario, estimando la relación entre la edad de los trabajadores y su ingreso por hora. Se evidencia que los ingresos aumentan con la edad y la experiencia hasta alcanzar un punto máximo en la mediana edad (40 – 45 años de edad), seguido tiende a estabilizarse y/o decrecer, tal como lo indica la teoría del capital humano. El segundo componente abordamos la brecha salarial de género, que siguen después de controlar por variables de educación y experiencia. Aunque parte de la diferencia es por variables observables, y el análisis sugiere factores más profundos como una posible discriminación en diversos aspectos.
+
+Por último, se evalúa que tan bien predicen distintos modelos econométricos. Comparando la regresión lineal, polinomiales y otros métodos como LASSO y Random Forest. Los resultados nos dicen que \_\_\_\_XXXXXX\_\_\_\_.
+
+Investigar sobre como se distribuyen los ingresos que se generan del trabajo y que factores contribuyen a las diferencias salariales ha sido un tema importante en los estudios económicos y políticos.
+
 ## Configuración inicial
 
 En esta sección se establece la configuración inicial y las librerías necesarias.
@@ -43,8 +55,7 @@ pacman::p_load(rvest, #Web scrapping
 
 ## Web scraping
 
-En este primer apartado extraemos los datos de la página: : https://ignaciomsarmiento.
-github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaciones
+En este primer apartado extraemos los datos de la página: : <https://ignaciomsarmiento>. github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaciones
 
 ```{r cars}
 
@@ -64,6 +75,7 @@ data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior par
 ```
 
 #Diccionario de datos !!!!!!!!!!!!!!!!!!
+
 ```{r}
 urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 
@@ -71,10 +83,6 @@ data_diccionario <- funcion_para_leer_tablas(urls2)
 View(data_diccionario)
 
 ```
-
-
-
-
 
 ## Revisión inicial de los datos
 
@@ -151,18 +159,17 @@ ggplot(data_miss, aes(x = reorder(skim_variable, +p_missing) , y =  p_missing)) 
 str(data_completa$mes)
 ```
 
-
 ## Manipulación y limpieza de datos
 
 En este apartado eliminamos todas las observaciones que en la variable de edad marcaron un valor inferior a 18 años, así como la eliminación de las personas no ocupadas tal como lo establece el estudio propuesto.
 
 Para esto se obtuvieron un total de 16.542 observaciones
 
-Ademas al ser la variable independiente el ingreso por hora 
+Ademas al ser la variable independiente el ingreso por hora
 
 Por otro lado tambien se realiza una manipulación de los datos en NA
 
-se filtra por 
+se filtra por
 
 ```{r}
 ## Eliminamos observaciones inferiores a los 18 años de edad
@@ -186,9 +193,6 @@ data_filter<- data_filter %>%
 
 ## Descriptivos
 
-
 ```{r}
 class(data_completa$p6430)
 ```
-
-
