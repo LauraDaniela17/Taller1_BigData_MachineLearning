@@ -38,7 +38,8 @@ pacman::p_load(rvest, #Web scrapping
                skimr, #Resumén descriptivo
                tidyverse, #Manipulación de datos
                styler, #Estilo de código
-               corrplot) #Matrices de correlación
+               corrplot, #Matrices de correlación
+               mice) #Imputación de NA
 ```
 
 ## Web scraping
@@ -162,19 +163,55 @@ Obs_filter #16.542 observaciones
 
 ## Manejo de datos faltantes y revisión:
 # Con los datos filtrados nuevamente generamos un data frame de datos faltantes y seleccionamos las variables de inteterés:
-data_filter_sub<- data_filter%>% select(sex, age, ocu, oficio, 
-                                        formal, size_firm, max_educ_level, y_total_m_ha,relab,p6240)
+data_filter<- data_filter%>% select(sex, age, oficio, mes,
+                                        formal, size_firm, max_educ_level, y_total_m_ha)
 data_miss <- skim(data_filter_sub) %>% select( skim_variable, n_missing)
+## Revisamos cuales son los oficios
+data_filter_sub %>%
+  filter(is.na(y_total_m_ha)) %>%              # 1. Seleccionar los missing
+  group_by(oficio) %>%                         # 2. Agrupar por oficio
+  summarise(n_missing = n(), .groups = "drop") %>% # 3. Contar NA por oficio
+  arrange(desc(n_missing))   
 
-## Imputaciión a 0 cuando la pregunta p6240 es 3 y 4.
-data_filter<- data_filter %>%
-  mutate(salario_imputado_h = ifelse(is.na(y_total_m_ha) & p6240%in% c(3, 6), 0, y_total_m_ha))
+## Imputación por MICE: 
+# Paso 1: Definir el método de imputación
+# Por defecto, mice quiere imputar todas las variables con NA.
+meth <- make.method(data_filter)
+
+# Solo imputamos "salario" con predictive mean matching (pmm)
+meth["y_total_m_ha"] <- "pmm"
+
+# Las demás variables NO se imputan (quedan como "")
+meth[names(meth) != "y_total_m_ha"] <- ""
+
+# Paso 2: Ejecutar imputación solo para salario por hora de asalariados e indepenedientes
+imp <- mice(
+  data_filter, 
+  m = 5,         # número de datasets imputados
+  maxit = 5,     # iteraciones
+  method = meth, # imputar solo salario
+  seed = 123
+)
+
+# Paso 3: Obtener datasets completo 
+data_imputada_1 <- complete(imp, 1)
+data_imputada_2 <- complete(imp, 2)
+data_imputada_3 <- complete(imp, 3)
+data_imputada_4 <- complete(imp, 4)
+data_imputada_5 <- complete(imp, 5)
+
+
+
+# Revisa cuántos NA quedaron en salario (imputación 1)
+sum(is.na(data_imputada_1$y_total_m_ha))
+
+
 ```
 
 ## Descriptivos
 
 
 ```{r}
-class(data_completa$p6430)
+class(data_filter$salario_imputado_h)
 ```
 
