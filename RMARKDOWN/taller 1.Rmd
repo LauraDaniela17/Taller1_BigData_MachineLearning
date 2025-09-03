@@ -161,7 +161,7 @@ En esta sección se realizó una exploración preliminar de la base de datos con
 #Revisamos cantidad de meses que hay en la base:
 n_meses <- data_filter %>%
   summarise(total_meses = n_distinct(mes)) %>%
-  pull(total_meses)  #12 meses
+  pull(total_meses)  #12 meses 
 
 # Creamos el ID único para cada persona según la documentación de la GEIH
 data_filter<- data_filter %>%
