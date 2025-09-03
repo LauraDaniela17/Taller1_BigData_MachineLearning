@@ -64,13 +64,33 @@ data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior par
 
 ```
 
-## Revisión inicial de los datos
 
-Revisión incial de la estructuración de los datos; cantidad de observaciones, tipos de datos, nombre de variables, identificación de NA.
+## Manipulación y limpieza de datos:
+
+Los sigientes bloque de código tiene como propósito preparar la base de datos para el análisis incluyendo los siguientes pasos:
+
+
+# 1. Escogencia muestral
+
+En este bloque se realiza una exploración preliminar de la base `data_completa` y la escogencia muestra:
+
+1. **Revisión de la estructura de los datos**
+   - Se utiliza `str(data_completa)` para identificar la estructura general de la base, encontrando que existen múltiples valores faltantes (NA) y que los tipos de datos más comunes son `character`, `integer` y `numeric`.  
+   - Se listan los nombres de todas las variables con `names(data_completa)`.  
+   - Se visualizan las primeras (`head()`) y últimas (`tail()`) observaciones para inspeccionar rápidamente el contenido.
+
+2. **Selección de variables de interés**
+   - Se identifican como relevantes las variables `age` (edad) y `ocu` (condición de ocupación).
+
+3. **Filtrado de la muestra**
+   - Se excluyen observaciones de individuos **menores de 18 años**.  
+   - Se conservan únicamente aquellos que reportan estar **ocupados (`ocu == 1`)**.
+
+4. **Revisión del tamaño muestral filtrado**
+   - Tras aplicar los filtros, la base resultante (`data_filter`) contiene **16.542 observaciones**.
 
 ```{r}
-
-## Revisión inicial:
+## Revisión inicial: 
 # str para revisar la estructura de los datos
 str(data_completa) #Vemos que hay una gran cantidad de NA y que los tipos mas comunes de datos son character, integrer, y numeral
 # Names para identificar los nombres de todas las variables
@@ -79,139 +99,201 @@ names(data_completa)
 head(data_completa)
 # tail para ver las ultimas   
 tail(data_completa)
- 
 
-# Análisis a nivel individuo:
+# Una vez encontrada las variables de interés para la selección de la muestra, 
+# las cuales son age y ocu, procedemos a filtrar data_completa
+
+## Filtramos observaciones inferiores a los 18 años de edad y no ocupados
+data_filter <- data_completa%>%
+  filter(age >= 18)%>%filter(ocu==1)
+
+# Revisamos nuevamente la cantidad de observaciones
+nrow(data_filter) #16.542 observaciones
+
+```
+# 2. Selección de variables
+
+En este bloque se depura la base de datos filtrada (`data_filter`) para trabajar únicamente con las variables relevantes:
+  
+Se conservan únicamente las siguientes columnas de interés:  
+   - `directorio`, `secuencia_p`, `orden`: variables de identificación del individuo.  
+   - `sex`: sexo.  
+   - `age`: edad.  
+   - `oficio`: ocupación declarada.  
+   - `mes`: mes en la que se realizó la encuesta.  
+   - `formal`: formalidad del trabajo.  
+   - `size_firm`: tamaño de la firma donde trabaja.  
+   - `max_educ_level`: máximo nivel educativo alcanzado.  
+   - `y_total_m_ha`: Ingreso total de asalariados + independientes por hora (nominal)
+   - `ingtotob`: ingreso total observado.  
+   - `hours_work_usual`: horas trabajadas usualmente por semana.
+   - `cuenta_propia`: Trabajador por cuenta propia
+
+```{r}
+# Con el nombre de las variables ya revisadas y 
+data_filter<- data_filter%>% select(directorio, secuencia_p, orden,sex, age, oficio, mes,
+                                        formal, size_firm, max_educ_level, y_total_m_ha, ingtotob, hours_work_usual, cuenta_propia)
+
+# OPCIONAL: creación propia variable ingreso-hora
+data_filter<- data_filter%>%mutate(ingreso_hora_1 = (ingtotob/(hours_work_usual*4.33)))
+```
+
+
+#3.1 Revisión inicial de los datos
+
+En esta sección se realizó una exploración preliminar de la base de datos con los siguientes objetivos:
+
+1. **Identificación de individuos únicos**  
+   - Se construyó una llave de identificación (`id_individuo`) combinando variables como `directorio`, `secuencia_p` y `orden`.  
+   - Con esta llave se verificó cuántos individuos únicos había en la base, evitando duplicados accidentales.  
+
+2. **Conteo de meses observados**  
+   - Se revisó cuántos meses distintos aparecen en la información de la GEIH.  
+   - Esto permitió confirmar la cobertura temporal de los datos.  
+
+3. **Seguimiento de individuos a lo largo del tiempo**  
+   - Se verificó si un mismo individuo (`id_individuo`) aparece en varios meses.  
+   - De esta manera se buscó identificar casos de panel (individuos observados más de una vez) y diferenciarlos de observaciones transversales (solo un mes).  
+
+
+```{r}
 
 #Revisamos cantidad de meses que hay en la base:
-n_meses <- data_completa %>%
+n_meses <- data_filter %>%
   summarise(total_meses = n_distinct(mes)) %>%
   pull(total_meses)  #12 meses
 
 # Creamos el ID único para cada persona según la documentación de la GEIH
-data_completa<- data_completa %>%
+data_filter<- data_filter %>%
   mutate(id_individuo = paste(directorio, secuencia_p, orden, sep = "_"))
 
-
 # Quitar duplicados a nivel individuo-mes
-df_unicos <- data_completa %>%
+df_unicos <- data_filter%>%
   distinct(id_individuo, mes)
 
-# Contar en cuántos meses aparece cada individuo
+# Contar en cuántos meses aparece cada individuo:
 individuos_completos <- df_unicos %>%
   group_by(id_individuo) %>%
   summarise(n_meses_individuo = n_distinct(mes), .groups = "drop") %>%
-  mutate(esta_en_todos = n_meses_individuo == n_meses)
+  mutate(esta_en_todos = n_meses_individuo == n_meses) #Cada individuo está en solo un mes
 
-# Número total de individuos únicos
-total_individuos <- n_distinct(data_completa$id_individuo)
+# Número total de individuos únicos:
+total_individuos <- n_distinct(data_filter$id_individuo) 
 
 # Número de individuos que aparecen en todos los meses
 n_en_todos <- sum(individuos_completos$esta_en_todos)
 
 #Resultados a nivel individuo
 list(
-  total_individuos = total_individuos, #32177 individuos
+  total_individuos = total_individuos, #16542 individuos
   meses_totales = n_meses, #12 meses
   individuos_en_todos_los_meses = n_en_todos #Ningún individuo se repite en ningún mes
 )
 
+# Eliminamos directorio, secuencia_p, orden, mes (ya no las necesitamos)
+# Manipulación de NA: 
+data_filter <- data_filter %>%
+  select(-secuencia_p,-directorio,-orden,-mes)
 
+```
+
+##3.2 Revisión valores faltantes:
+
+En este bloque de código se realiza un análisis exploratorio de los valores faltantes en la base de datos `data_filter`, siguiendo los pasos:
+
+1. **Identificación de valores faltantes**  
+   - Se usa la función `skim()` para obtener un resumen de cada variable, extrayendo el número de valores faltantes (`n_missing`).  
+
+2. **Cálculo del porcentaje de valores faltantes**  
+   - Se obtiene el número total de observaciones (`Obs = nrow(data_filter)`).  
+   - Se calcula el porcentaje de valores faltantes para cada variable dividiendo `n_missing / Obs`.  
+
+3. **Filtrado de variables relevantes**  
+   - Se eliminan las variables que no presentan valores faltantes (`n_missing = 0`) para centrar el análisis solo en aquellas con datos ausentes.  
+
+4. **Visualización gráfica**  
+   - Se construye un gráfico de barras con `ggplot2` que muestra el **porcentaje de valores faltantes por variable**.  
+   - Se incluye:  
+     - Ordenamiento de las variables de mayor a menor porcentaje de faltantes.  
+     - Etiquetas con el porcentaje exacto sobre cada barra.  
+
+5. **Hallazgo clave**  
+   - Se identificó que alrededor del **10% de los registros de la variable `y_total_m_ha`**  presentan valores faltantes, lo que debe tenerse en cuenta en los análisis posteriores.
+   
+```{r}
 # Revisamos valores faltantes:
-data_miss <- skim(data_completa) %>% select( skim_variable, n_missing)
+data_miss <- skim(data_filter) %>% select( skim_variable, n_missing)
 # Calculamnos número de observaciones para despues calcular el porcentaje de NA
-Obs <- nrow(data_completa) 
-Obs #32.177 observaciones
+Obs <- nrow(data_filter) 
 #Porcentaje de observaciones faltantes
 data_miss<- data_miss %>% mutate(p_missing= n_missing/Obs)
 #Eliminar los que no tienen datos faltantes
 data_miss<- data_miss %>% filter(n_missing!= 0)
 
 # Revisar los datos faltantes gráficamente:
-
-ggplot(data_miss, aes(x = reorder(skim_variable, +p_missing) , y =  p_missing)) +
-  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+ggplot(data_miss, aes(x = reorder(skim_variable, p_missing), y = p_missing)) +
+  geom_col(fill = "skyblue", color = "white", width = 0.7) +
   coord_flip() +
-  labs(title = "NA por variable", x = "Variable", y = "Porcentaje de NA")+ 
-  theme(axis.text = element_text(size = 5))
+  geom_text(aes(label = scales::percent(p_missing, accuracy = 0.1)),
+            hjust = -0.1, size = 3) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Porcentaje de valores faltantes por variable",
+    x = "Variable",
+    y = "Porcentaje de NA"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.text.y = element_text(size = 8)
+  )
 
-
-str(data_completa$mes)
+# EL 10% de los valores de la variable y_total_m_ha son faltantes
 ```
 
 
-## Manipulación y limpieza de datos
 
-En este apartado eliminamos todas las observaciones que en la variable de edad marcaron un valor inferior a 18 años, así como la eliminación de las personas no ocupadas tal como lo establece el estudio propuesto.
+## Manipulación final de datos
 
-Para esto se obtuvieron un total de 16.542 observaciones
+En este bloque se realizan ajustes en la base `data_filter` para preparar los datos antes del análisis:
 
-Ademas al ser la variable independiente el ingreso por hora 
+1. **Conversión de variables categóricas a factor**  
+   - Se transforman las variables `sex`, `mes`, `formal`, `oficio`, `size_firm` y `max_educ_level` en factores, de modo que sean tratadas como categóricas en los análisis posteriores.
 
-Por otro lado tambien se realiza una manipulación de los datos en NA
+3. **Renombramiento de variables**  
+   - La variable `y_total_m_ha` se renombra como `ingreso_hora` para mejorar la legibilidad.
 
-se filtra por 
+4. **Tratamiento de valores faltantes**  
+   - Se aplica `drop_na()` para eliminar todas las observaciones que contienen al menos un valor faltante, debido a que la variable `y`, 
+   cuenta con el 10% de valores faltantes.
 
 ```{r}
-## Eliminamos observaciones inferiores a los 18 años de edad
-data_filter <- data_completa%>%
-  filter(age >= 18)%>%filter(ocu==1)
-# Revisamos nuevamente la cantidad de observaciones
-Obs_filter <- nrow(data_filter) 
-Obs_filter #16.542 observaciones
+# Revisamos nuevamente la estructura de los datos
+str(data_filter)
 
+# Cambiamos a factor las variables que son categóricas
+data_filter <- data_filter %>%
+  mutate(
+    sex = as.factor(sex),
+    mes = as.factor(mes),
+    formal = as.factor(formal),
+    oficio = as.factor(oficio),
+    size_firm = as.factor(size_firm),
+    max_educ_level = as.factor(max_educ_level),
+    cuenta_propia = as.factor(cuenta_propia)
+  )
 
-## Manejo de datos faltantes y revisión:
-# Con los datos filtrados nuevamente generamos un data frame de datos faltantes y seleccionamos las variables de inteterés:
-data_filter<- data_filter%>% select(sex, age, oficio, mes,
-                                        formal, size_firm, max_educ_level, y_total_m_ha)
-data_miss <- skim(data_filter_sub) %>% select( skim_variable, n_missing)
-## Revisamos cuales son los oficios
-data_filter_sub %>%
-  filter(is.na(y_total_m_ha)) %>%              # 1. Seleccionar los missing
-  group_by(oficio) %>%                         # 2. Agrupar por oficio
-  summarise(n_missing = n(), .groups = "drop") %>% # 3. Contar NA por oficio
-  arrange(desc(n_missing))   
+# renombramos algunas variables: 
+data_filter <- data_filter %>%
+  rename(ingreso_hora = y_total_m_ha)
 
-## Imputación por MICE: 
-# Paso 1: Definir el método de imputación
-# Por defecto, mice quiere imputar todas las variables con NA.
-meth <- make.method(data_filter)
-
-# Solo imputamos "salario" con predictive mean matching (pmm)
-meth["y_total_m_ha"] <- "pmm"
-
-# Las demás variables NO se imputan (quedan como "")
-meth[names(meth) != "y_total_m_ha"] <- ""
-
-# Paso 2: Ejecutar imputación solo para salario por hora de asalariados e indepenedientes
-imp <- mice(
-  data_filter, 
-  m = 5,         # número de datasets imputados
-  maxit = 5,     # iteraciones
-  method = meth, # imputar solo salario
-  seed = 123
-)
-
-# Paso 3: Obtener datasets completo 
-data_imputada_1 <- complete(imp, 1)
-data_imputada_2 <- complete(imp, 2)
-data_imputada_3 <- complete(imp, 3)
-data_imputada_4 <- complete(imp, 4)
-data_imputada_5 <- complete(imp, 5)
-
-
-
-# Revisa cuántos NA quedaron en salario (imputación 1)
-sum(is.na(data_imputada_1$y_total_m_ha))
-
+# Manipulación de NA: 
+data_filter <- data_filter %>%
+  drop_na()
 
 ```
 
 ## Descriptivos
 
 
-```{r}
-class(data_filter$salario_imputado_h)
-```
 
