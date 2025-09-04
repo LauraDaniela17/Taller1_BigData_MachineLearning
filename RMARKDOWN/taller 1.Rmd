@@ -139,7 +139,7 @@ data_filter<- data_filter%>%mutate(ingreso_hora_1 = (ingtotob/(hours_work_usual*
 ```
 
 
-#3.1 Revisión inicial de los datos
+# 3.1 Revisión inicial de los datos
 
 En esta sección se realizó una exploración preliminar de la base de datos con los siguientes objetivos:
 
@@ -195,9 +195,11 @@ list(
 data_filter <- data_filter %>%
   select(-secuencia_p,-directorio,-orden,-mes)
 
+
+
 ```
 
-##3.2 Revisión valores faltantes:
+# 3.2 Revisión valores faltantes:
 
 En este bloque de código se realiza un análisis exploratorio de los valores faltantes en la base de datos `data_filter`, siguiendo los pasos:
 
@@ -251,9 +253,46 @@ ggplot(data_miss, aes(x = reorder(skim_variable, p_missing), y = p_missing)) +
 # EL 10% de los valores de la variable y_total_m_ha son faltantes
 ```
 
+# 3.3 Revisión de outliers (valores atípicos):
+
+En este bloque se evaluó la presencia de **valores atípicos** en la variable `ingreso_hora`.  
+
+1. **Cálculo de límites de referencia:**  
+   - Se definieron los percentiles 1% y 99% como puntos de corte.  
+   - Los valores por debajo del percentil 1% (`low`) y por encima del percentil 99% (`up`) fueron considerados potenciales outliers.  
+
+2. **Visualización mediante boxplot:**  
+   - Se construyó un boxplot de la variable `ingreso_hora`.  
+   - Se añadieron dos líneas horizontales punteadas en color azul que marcan los límites de outliers (`low` y `up`).  
+   - Los valores atípicos fueron resaltados en color rojo dentro del gráfico.  
+
+```{r}
+# Definimos límites inferior y superior de outliers usando percentiles
+low <- quantile(data_filter$ingreso_hora, 0.01, na.rm = TRUE)   # Percentil 1%
+up  <- quantile(data_filter$ingreso_hora, 0.99, na.rm = TRUE)   # Percentil 99%
+
+# Mostramos los valores de referencia
+low
+up
+
+# Creamos boxplot para visualizar distribución de ingreso por hora
+plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora)) +
+  geom_boxplot(fill = "skyblue", outlier.color = "red", outlier.size = 1) + # boxplot con outliers resaltados
+  geom_hline(yintercept = low, color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite inferior
+  geom_hline(yintercept = up,  color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite superior
+  labs(
+    title = "Distribución del ingreso por hora con límites de outliers",
+    x = "",
+    y = "Ingreso por hora"
+  ) +
+  theme_bw()
+
+# Mostrar gráfico
+plot_outlier
+```
 
 
-## Manipulación final de datos
+# 4. Manipulación final de datos:
 
 En este bloque se realizan ajustes en la base `data_filter` para preparar los datos antes del análisis:
 
@@ -266,7 +305,10 @@ En este bloque se realizan ajustes en la base `data_filter` para preparar los da
 4. **Tratamiento de valores faltantes**  
    - Se aplica `drop_na()` para eliminar todas las observaciones que contienen al menos un valor faltante, debido a que la variable `y`, 
    cuenta con el 10% de valores faltantes.
-
+   
+5. **Tramiento de outliers**
+   - Dado que la variable explicada presenta una alta asimetría y presencia de outliers extremos, se aplica una transformación logarítmica.
+   
 ```{r}
 # Revisamos nuevamente la estructura de los datos
 str(data_filter)
@@ -275,7 +317,6 @@ str(data_filter)
 data_filter <- data_filter %>%
   mutate(
     sex = as.factor(sex),
-    mes = as.factor(mes),
     formal = as.factor(formal),
     oficio = as.factor(oficio),
     size_firm = as.factor(size_firm),
@@ -290,6 +331,11 @@ data_filter <- data_filter %>%
 # Manipulación de NA: 
 data_filter <- data_filter %>%
   drop_na()
+
+# Manipulación de la variable ingreso por hora para reducción de peso de outliers
+data_filter <- data_filter %>%
+  filter(ingreso_hora > 0) %>%  # elimina ceros porque logaritmo no permite tener 0
+  mutate(log_ingreso_hora = log(ingreso_hora))
 
 ```
 
