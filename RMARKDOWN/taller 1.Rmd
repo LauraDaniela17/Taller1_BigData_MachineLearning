@@ -6,7 +6,7 @@ date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
-## 1 Intriducción
+#  1 Intriducción
 
 La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos. Entender estos factores de edad, los estudios, el tiempo trabajado, la ocupación y el género en los ingresos permite no solo explicar las desigualdades en el mercado laboral, sino también buscar formas más justas y eficientes en la asignación de recursos. Por eso, esta presente investigación busca analizar cómo cambia el ingreso en edad – salario, la brecha salarial de género y la ejecución de diversos modelos de predicción de ingresos en Bogotá, haciendo uso de datos sobre la población ocupada.
 
@@ -51,10 +51,12 @@ pacman::p_load(rvest, #Web scrapping
                tidyverse, #Manipulación de datos
                styler, #Estilo de código
                corrplot, #Matrices de correlación
-               mice) #Imputación de NA
+               boot) #Bootstrap
 ```
 
-## Web scraping
+# 2. Datos
+
+### Web scraping
 
 En este primer apartado extraemos los datos de la página: : <https://ignaciomsarmiento>. github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaciones
 
@@ -79,7 +81,7 @@ data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior par
 
 Los siguientes bloque de código tiene como propósito preparar la base de datos para el análisis incluyendo los siguientes pasos:
 
-# 1. Escogencia muestral
+## Escogencia muestral
 
 En este bloque se realiza una exploración preliminar de la base `data_completa` y la escogencia muestra:
 
@@ -118,7 +120,7 @@ nrow(data_filter) #16.542 observaciones
 
 ```
 
-# 2. Selección de variables
+## elección de variables
 
 En este bloque se depura la base de datos filtrada (`data_filter`) para trabajar únicamente con las variables relevantes:
 
@@ -143,7 +145,7 @@ data_filter<- data_filter%>% select(directorio, secuencia_p, orden,sex, age, ofi
 data_filter<- data_filter%>%mutate(ingreso_hora_1 = (ingtotob/(hours_work_usual*4.33)))
 ```
 
-# 3.1 Revisión inicial de los datos
+## Revisión inicial de los datos
 
 En esta sección se realizó una exploración preliminar de la base de datos con los siguientes objetivos:
 
@@ -200,7 +202,7 @@ data_filter <- data_filter %>%
 
 ```
 
-# 3.2 Revisión valores faltantes:
+## Revisión valores faltantes
 
 En este bloque de código se realiza un análisis exploratorio de los valores faltantes en la base de datos `data_filter`, siguiendo los pasos:
 
@@ -250,7 +252,7 @@ ggplot(data_miss, aes(x = reorder(skim_variable, p_missing), y = p_missing)) +
 # EL 10% de los valores de la variable y_total_m_ha son faltantes
 ```
 
-# 3.3 Revisión de outliers (valores atípicos):
+## Revisión de outliers (valores atípicos):
 
 En este bloque se evaluó la presencia de **valores atípicos** en la variable `ingreso_hora`.
 
@@ -264,8 +266,6 @@ En este bloque se evaluó la presencia de **valores atípicos** en la variable `
 
 ```{r}
 # Definimos límites inferior y superior de outliers usando percentiles
-low <- quantile(data_filter$ingreso_hora, 0.01, na.rm = TRUE)   # Percentil 1%
-up  <- quantile(data_filter$ingreso_hora, 0.99, na.rm = TRUE)   # Percentil 99%
 low <- quantile(data_filter$ingreso_hora_1, 0.01, na.rm = TRUE)   # Percentil 1%
 up  <- quantile(data_filter$ingreso_hora_1, 0.99, na.rm = TRUE)   # Percentil 99%
 
@@ -274,35 +274,43 @@ low
 up
 
 # Creamos boxplot para visualizar distribución de ingreso por hora
-plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora)) +
 plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
   geom_boxplot(fill = "skyblue", outlier.color = "red", outlier.size = 1) + # boxplot con outliers resaltados
   geom_hline(yintercept = low, color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite inferior
-  geom_hline(yintercept = up,  color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite superior
   labs(title = "Boxplot de salario horario con límites de outliers", y = "Ingreso por hora", x = "") +
   theme_minimal()
 
 # Mostrar el gráfico
 print(plot_outlier)  
 
-  
-plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
-  geom_boxplot(fill = "skyblue", outlier.color = "red", outlier.size = 1) +  # boxplot con outliers resaltados
-  geom_hline(yintercept = low, color = "blue", linetype = "dashed", linewidth = 0.7) +  # línea límite inferior
-  geom_hline(yintercept = up,  color = "blue", linetype = "dashed", linewidth = 0.7) +  # línea límite superior
-  labs(title = "Boxplot de salario horario con límites de outliers", y = "Ingreso por hora", x = "") +
-  theme_minimal()
 
-# Mostrar el gráfico
-print(plot_outlier)  
-  
+```
+
+## Manipulación final de datos
+
+```{r}
+# Revisamos nuevamente la estructura de los datos
+str(data_filter)
+
+# Cambiamos a factor las variables que son categóricas
+data_filter <- data_filter %>%
+  mutate(
+    sex = as.factor(sex),
+    formal = as.factor(formal),
+    oficio = as.factor(oficio),
+    size_firm = as.factor(size_firm),
+    max_educ_level = as.factor(max_educ_level),
+    cuenta_propia = as.factor(cuenta_propia)
+  )
+
 # Manipulación de la variable ingreso por hora para reducción de peso de outliers
 data_filter <- data_filter %>%
-  filter(ingreso_hora > 0) %>%  # elimina ceros porque logaritmo no permite tener 0
+  filter(ingreso_hora_1> 0) %>%  # elimina ceros porque logaritmo no permite tener 0
   mutate(log_ingreso_hora = log(ingreso_hora_1))
-  mutate(log_ingreso_hora = log(ingreso_hora_1)) 
-  
+
 ```
+
+
 
 ## 2.d.Estadísticas descriptivas de las variables
 
@@ -527,7 +535,6 @@ gap_fwl
 
 ```{r}
 
-library(boot)
 
 boot_fwl <- function(data, index){
   d <- data[index, ]
