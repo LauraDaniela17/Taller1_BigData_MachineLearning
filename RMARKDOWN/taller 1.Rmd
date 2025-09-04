@@ -268,15 +268,15 @@ En este bloque se evaluó la presencia de **valores atípicos** en la variable `
 
 ```{r}
 # Definimos límites inferior y superior de outliers usando percentiles
-low <- quantile(data_filter$ingreso_hora, 0.01, na.rm = TRUE)   # Percentil 1%
-up  <- quantile(data_filter$ingreso_hora, 0.99, na.rm = TRUE)   # Percentil 99%
+low <- quantile(data_filter$ingreso_hora_1, 0.01, na.rm = TRUE)   # Percentil 1%
+up  <- quantile(data_filter$ingreso_hora_1, 0.99, na.rm = TRUE)   # Percentil 99%
 
 # Mostramos los valores de referencia
 low
 up
 
 # Creamos boxplot para visualizar distribución de ingreso por hora
-plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora)) +
+plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
   geom_boxplot(fill = "skyblue", outlier.color = "red", outlier.size = 1) + # boxplot con outliers resaltados
   geom_hline(yintercept = low, color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite inferior
   geom_hline(yintercept = up,  color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite superior
@@ -335,7 +335,7 @@ data_filter <- data_filter %>%
 # Manipulación de la variable ingreso por hora para reducción de peso de outliers
 data_filter <- data_filter %>%
   filter(ingreso_hora > 0) %>%  # elimina ceros porque logaritmo no permite tener 0
-  mutate(log_ingreso_hora = log(ingreso_hora))
+  mutate(log_ingreso_hora = log(ingreso_hora_1)) 
 
 ```
 
