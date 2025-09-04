@@ -331,11 +331,6 @@ datasummary_balance(
   fmt = 2
 )
 # Gráfico: densidad de ln(w) por sexo
-ggplot(datos, aes(x = log(ingreso_hora_1), color = sex_label)) +
-  geom_density(size=1.1) +
-  labs(title="Distribución de log(salario horario) por sexo", x="ln(salario por hora)", y="Densidad")
-
-__
 
 library(ggplot2)
 library(scales)  # Para formatear ejes si lo deseas
@@ -419,9 +414,13 @@ ggplot(data_filter, aes(x = factor(formal, levels = c(0, 1), labels = c("No form
 
 ```
 
-## 4.a Brecha Salarial de género
+## 4.Brecha Salarial de género
 
-La ecuación del modelo es: $\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + u$
+# 4.a Brecha incondicional
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + u
+$$
 
 ```{r}
 #tipo de valores
@@ -440,6 +439,7 @@ datos_lim <- datos %>%
 
 wage_gap <- lm(log(ingreso_hora_1) ~ sex, data = datos_lim)
 
+#Visualización de tabla
 library(gt)
 
 tidy(wage_gap, conf.int = TRUE) %>%
@@ -457,3 +457,94 @@ gap_incond <- 100*(exp(coef(wage_gap)["sex"]) - 1)
 gap_incond
 
 ```
+
+# 4.b Brecha condicional con controles
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + \theta X + u
+$$
+
+donde:
+
+-   $w$: salario\
+-   $\text{sex}$: variable binaria de sexo\
+-   $X = \{ \text{edad}, \text{edad}^2, \text{educación}, \text{oficio}, \text{formalidad}, \text{tamaño de empresa}, \text{horas} \}$\
+-   $u$: término de error aleatorio
+
+```{r}
+# Filtro de datos
+gap_cond <- lm(log(ingreso_hora_1) ~ sex + age + I(age^2) + max_educ_level +
+               oficio + formal + size_firm + hours_work_usual, 
+             data = datos_lim)
+#Visualización de tabla
+tidy(gap_cond, conf.int = TRUE) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sex" = "Sexo (1 = hombres)")) %>%
+  gt() %>%
+  tab_header(
+    title = "Estimación de Brecha Condicional con Controles",
+    subtitle = "Modelo log-lineal con controles"
+  ) %>%
+  fmt_number(columns = c(estimate, std.error, statistic, p.value, conf.low, conf.high), decimals = 2)
+
+# Interpretación en porcentaje
+gap_cond <- 100*(exp(coef(gap_cond)["sex"]) - 1)
+gap_cond
+
+```
+# 4.b.i FWL (Frisch-Waugh-Lovell)
+
+```{r}
+# Paso 1: sex ~ X
+res_sex <- lm(sex ~ age + I(age^2) + max_educ_level +
+                 oficio + formal + size_firm + hours_work_usual, 
+              data = datos_lim)$residuals
+
+# Paso 2: ln(w) ~ X
+res_w <- lm(log(ingreso_hora_1) ~ age + I(age^2) + max_educ_level +
+               oficio + formal + size_firm + hours_work_usual, 
+            data = datos_lim)$residuals
+
+# Paso 3: residuales
+m_fwl <- lm(res_w ~ res_sex)
+summary(m_fwl)
+
+#Visualización de tabla
+tidy(m_fwl, conf.int = TRUE) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sex" = "Sexo (1 = hombres)")) %>%
+  gt() %>%
+  tab_header(
+    title = "Estimación de Brecha Condicional con Controles",
+    subtitle = "Modelo log-lineal con controles"
+  ) %>%
+  fmt_number(columns = c(estimate, std.error, statistic, p.value, conf.low, conf.high), decimals = 2)
+
+# Interpretación en porcentaje
+gap_fwl <- 100*(exp(coef(m_fwl)["res_sex"]) - 1)
+gap_fwl
+```
+
+# 4.b.ii FWL con bootstrap
+
+```{r}
+
+library(boot)
+
+boot_fwl <- function(data, index){
+  d <- data[index, ]
+  r_sex <- lm(sex ~ age + I(age^2) + max_educ_level +
+                 oficio + formal + size_firm + hours_work_usual, 
+              data = d)$residuals
+  r_w   <- lm(log(ingreso_hora_1) ~ age + I(age^2) + max_educ_level +
+                 oficio + formal + size_firm + hours_work_usual, 
+              data = d)$residuals
+  coef(lm(r_w ~ r_sex))[2]
+}
+
+set.seed(123)
+boot_res <- boot(data = datos_lim, statistic = boot_fwl, R = 500)
+boot.ci(boot_res, type="perc")
+
+```
+
+
+
