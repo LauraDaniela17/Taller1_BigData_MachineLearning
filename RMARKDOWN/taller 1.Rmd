@@ -17,7 +17,7 @@ En el primero componente, nos enfocamos en el análisis en el perfil edad – sa
 Por último, se evalúa que tan bien predicen distintos modelos econométricos. Comparando la regresión lineal, polinomiales y otros métodos como LASSO y Random Forest. Los resultados nos dicen que \_\_\_\_XXXXXX\_\_\_\_.
 
 Investigar sobre como se distribuyen los ingresos que se generan del trabajo y que factores contribuyen a las diferencias salariales ha sido un tema importante en los estudios económicos y políticos.
-
+ 
 ## Configuración inicial
 
 En esta sección se establece la configuración inicial y las librerías necesarias.
