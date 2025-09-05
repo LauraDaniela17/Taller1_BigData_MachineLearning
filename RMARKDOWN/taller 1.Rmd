@@ -10,7 +10,7 @@ editor_options:
 ---
 
 
-# 1 Intriducción
+# 1 Introducción
 
 La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos.
 Entender estos factores de edad, los estudios, el tiempo trabajado, la ocupación y el género en los ingresos permite no solo explicar las desigualdades en el mercado laboral, sino también buscar formas más justas y eficientes en la asignación de recursos.
@@ -57,6 +57,9 @@ knitr::opts_chunk$set(
   tidy.opts = list(width.cutoff = 60)  
 )
 
+```
+
+```{r}
 # Instalar y cargar pacman (gestor de paquetes) y otras librerías para análisis de datos
 
 if (!require("pacman")) install.packages("pacman")
@@ -77,7 +80,10 @@ pacman::p_load(rvest, #Web scrapping
                gt, #Mejores tablas
                broom,  
                corrplot) #Matrices de correlación
+
 ```
+
+
 
 ## Web scraping
 
@@ -105,7 +111,7 @@ github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaci
 
 ```{r cars}
 
-# Generamos URL: contiene un vector de 10 paginaciones
+# Generación de URL: contiene un vector de 10 paginaciones
 urls <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_", 1:10, ".html")
 
 funcion_para_leer_tablas <- function(a) {
@@ -132,7 +138,7 @@ View(data_diccionario)
 
 ## Revisión inicial de los datos
 
-Revisión incial de la estructuración de los datos; cantidad de observaciones, tipos de datos, nombre de variables, identificación de NA.
+Revisión incial de la estructuración de los datos; cantidad de observaciones, tipos de datos, nombre de variables, identificación de valores faltantes (NA).
 
 ```{r}
 
