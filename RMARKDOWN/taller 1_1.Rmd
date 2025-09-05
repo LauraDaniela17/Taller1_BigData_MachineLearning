@@ -77,6 +77,18 @@ data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior par
 
 ```
 
+
+
+```{r}
+```{r}
+urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
+
+data_diccionario <- funcion_para_leer_tablas(urls2)
+View(data_diccionario)
+```
+
+```
+
 ## Manipulación y limpieza de datos:
 
 Los siguientes bloque de código tiene como propósito preparar la base de datos para el análisis incluyendo los siguientes pasos:
