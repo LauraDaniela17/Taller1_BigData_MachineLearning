@@ -686,13 +686,6 @@ ggplot(split_data, aes(x = Split, y = Count)) +
 
 Punto 5.b.
 
-Modelos anteriores:
-
-```{r}
-rm(form_1)
-```
-
-
 #MODEL 1
 
 
@@ -797,13 +790,19 @@ modelo1b <- train(
 )  
 modelo1b
 ```
+
 ```{r}
 modelo1b$resample
+
 ```
+
+
 ```{r}
 score1b<- mean(modelo1b$resample$RMSE)
 score1b
 ```
+
+
 #MODEL 2
 ```{r}
 set.seed(10101)  
@@ -851,17 +850,19 @@ score3b
 ```
 #MODEL 4
 ```{r}
-set.seed(69205)  
+set.seed(10101)  
 modelo4b <- train(form_4,
                   data = datos_lim,
                   method = 'lm', 
                   trControl= ctrl)
 modelo4b
 ```
+
 ```{r}
 score4b<- mean(modelo4b$resample$RMSE)
 score4b
 ```
+
 ```{r}
 
 ```
