@@ -9,6 +9,7 @@ editor_options:
     wrap: sentence
 ---
 
+
 # 1 Intriducción
 
 La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos.
@@ -30,16 +31,15 @@ Los resultados nos dicen que \_\_\_\_XXXXXX\_\_\_\_.
 
 Investigar sobre como se distribuyen los ingresos que se generan del trabajo y que factores contribuyen a las diferencias salariales ha sido un tema importante en los estudios económicos y políticos.
  
-## Configuración inicial
 
 El primer bloque de código se utiliza para preparar el entorno de trabajo antes de iniciar el análisis de los datos.
 
 1.  **Configuración de `knitr`**
 
-2.  **Gestión de librerías con `pacman`**\
+2.  **Gestión de librerías con `pacman`**
     Se verifica si el paquete `pacman` está instalado y, en caso contrario, se instala.
 
-3.  **Carga de librerías para el análisis**\
+3.  **Carga de librerías para el análisis**
     Cargue de librerías necesarias
 
 ```{r setup, include=FALSE}
@@ -75,12 +75,12 @@ pacman::p_load(rvest, #Web scrapping
                modelsummary, #Resuménes en tablas
                scales,  # Para formatear ejes
                gt, #Mejores tablas
-               broom)  
+               broom,  
+               corrplot) #Matrices de correlación
 ```
 
-# 2. Datos
+## Web scraping
 
-### Web scraping
 
 En este bloque se realiza la **extracción automática de los datos** de la Gran Encuesta Integrada de Hogares (GEIH) 2018 para Bogotá, disponible en el sitio web del profesor Ignacio Sarmiento:
 <https://ignaciomsarmiento.github.io/GEIH2018_sample/>.
@@ -100,6 +100,9 @@ En este bloque se realiza la **extracción automática de los datos** de la Gran
 3.  **Unificación de los datos en una sola base**
     Se aplica la función a todas las URLs con `map_dfr()`, lo que permite **leer y combinar las 10 tablas en un único `data.frame` (`data_completa`)**.
 
+En este primer apartado extraemos los datos de la página: : https://ignaciomsarmiento.
+github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaciones
+
 ```{r cars}
 
 # Generamos URL: contiene un vector de 10 paginaciones
@@ -117,28 +120,23 @@ data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior par
 
 ```
 
-## Manipulación y limpieza de datos:
+#Diccionario de datos !!!!!!!!!!!!!!!!!!
+```{r}
+urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 
-Los siguientes bloque de código tiene como propósito preparar la base de datos para el análisis incluyendo los siguientes pasos:
+data_diccionario <- funcion_para_leer_tablas(urls2)
+View(data_diccionario)
 
-## Escogencia muestral
+```
 
-En este bloque se realiza una exploración preliminar de la base `data_completa` y la escogencia muestra:
 
-1.  **Revisión de la estructura de los datos**
-    -   Se utiliza `str(data_completa)` para identificar la estructura general de la base, encontrando que existen múltiples valores faltantes (NA) y que los tipos de datos más comunes son `character`, `integer` y `numeric`.\
-    -   Se listan los nombres de todas las variables con `names(data_completa)`.\
-    -   Se visualizan las primeras (`head()`) y últimas (`tail()`) observaciones para inspeccionar rápidamente el contenido.
-2.  **Selección de variables de interés**
-    -   Se identifican como relevantes las variables `age` (edad) y `ocu` (condición de ocupación).
-3.  **Filtrado de la muestra**
-    -   Se excluyen observaciones de individuos **menores de 18 años**.\
-    -   Se conservan únicamente aquellos que reportan estar **ocupados (`ocu == 1`)**.
-4.  **Revisión del tamaño muestral filtrado**
-    -   Tras aplicar los filtros, la base resultante (`data_filter`) contiene **16.542 observaciones**.
+## Revisión inicial de los datos
+
+Revisión incial de la estructuración de los datos; cantidad de observaciones, tipos de datos, nombre de variables, identificación de NA.
 
 ```{r}
-## Revisión inicial: 
+
+## Revisión inicial:
 # str para revisar la estructura de los datos
 str(data_completa) #Vemos que hay una gran cantidad de NA y que los tipos mas comunes de datos son character, integrer, y numeral
 # Names para identificar los nombres de todas las variables
@@ -147,6 +145,8 @@ names(data_completa)
 head(data_completa)
 # tail para ver las ultimas   
 tail(data_completa)
+ 
+
 
 # Una vez encontrada las variables de interés para la selección de la muestra, 
 # las cuales son age y ocu, procedemos a filtrar data_completa
@@ -174,14 +174,14 @@ Se conservan únicamente las siguientes columnas de interés: - `directorio`, `s
 - `max_educ_level`: máximo nivel educativo alcanzado.
 - `impa`: Ingreso monetario primera actividad antes de imputación.
 - `hours_work_usual`: horas trabajadas usualmente por semana.
-- `cuenta_propia`: Trabajador por cuenta propia
+- `fex_c`: Factor expansión.
 
 Creamos la variable dependiente de la siguiente manera: - **Númerador**: `impa` - **Denominador**: `hours_work_usual` \* 4.33 - Donde `4.33` corresponde al promedio de semanas en un mes (52 semanas / 12 meses).
 
 ```{r}
 # Con el nombre de las variables ya revisadas y 
 data_filter<- data_filter%>% select(directorio, secuencia_p, orden,sex, age, relab, mes,
-                                        formal, size_firm, max_educ_level, impa, hours_work_usual, cuenta_propia)
+                                        formal, size_firm, max_educ_level, impa, hours_work_usual, fex_c)
 
 #Creación variable dependiente
 data_filter<- data_filter%>%
@@ -205,46 +205,45 @@ En esta sección se realizó una exploración preliminar de la base de datos con
 
 ```{r}
 
+# Análisis a nivel individuo:
+
 #Revisamos cantidad de meses que hay en la base:
 n_meses <- data_filter %>%
   summarise(total_meses = n_distinct(mes)) %>%
-  pull(total_meses)  #12 meses 
+  pull(total_meses)  #12 meses
 
 # Creamos el ID único para cada persona según la documentación de la GEIH
-data_filter<- data_filter %>%
+data_filter<- data_filter%>%
   mutate(id_individuo = paste(directorio, secuencia_p, orden, sep = "_"))
+
 
 # Quitar duplicados a nivel individuo-mes
 df_unicos <- data_filter%>%
   distinct(id_individuo, mes)
 
-# Contar en cuántos meses aparece cada individuo:
+# Contar en cuántos meses aparece cada individuo
 individuos_completos <- df_unicos %>%
   group_by(id_individuo) %>%
   summarise(n_meses_individuo = n_distinct(mes), .groups = "drop") %>%
-  mutate(esta_en_todos = n_meses_individuo == n_meses) #Cada individuo está en solo un mes
+  mutate(esta_en_todos = n_meses_individuo == n_meses)
 
-# Número total de individuos únicos:
-total_individuos <- n_distinct(data_filter$id_individuo) 
+# Número total de individuos únicos
+total_individuos <- n_distinct(data_filter$id_individuo)
 
 # Número de individuos que aparecen en todos los meses
 n_en_todos <- sum(individuos_completos$esta_en_todos)
 
 #Resultados a nivel individuo
 list(
-  total_individuos = total_individuos, #16542 individuos
+  total_individuos = total_individuos, #16.542 individuos
   meses_totales = n_meses, #12 meses
   individuos_en_todos_los_meses = n_en_todos #Ningún individuo se repite en ningún mes
 )
 
-# Eliminamos directorio, secuencia_p, orden, mes (ya no las necesitamos)
-# Manipulación de NA: 
-data_filter <- data_filter %>%
-  select(-secuencia_p,-directorio,-orden,-mes)
 
 ```
 
-## Revisión valores faltantes y ceros en la variable de ing43wo
+## Revisión valores faltantes y ceros en la variable de ingreso
 
 En este bloque de código se realiza un análisis exploratorio de los valores faltantes en la base de datos `data_filter`, siguiendo los pasos:
 
@@ -258,36 +257,28 @@ En este bloque de código se realiza un análisis exploratorio de los valores fa
 4.  **Visualización gráfica**
     -   Se construye un gráfico de barras con `ggplot2` que muestra el **porcentaje de valores faltantes por variable**.\
     -   Se incluye:
-        -   Ordenamiento de las variables de mayor a menor porcentaje de faltantes.\
+        -   Ordenamiento de las variables de mayor a menor porcentaje de faltantes.
         -   Etiquetas con el porcentaje exacto sobre cada barra.
 
 ```{r}
+
 # Revisamos valores faltantes:
 data_miss <- skim(data_filter) %>% select( skim_variable, n_missing)
 # Calculamnos número de observaciones para despues calcular el porcentaje de NA
 Obs <- nrow(data_filter) 
+Obs #32.177 observaciones
 #Porcentaje de observaciones faltantes
 data_miss<- data_miss %>% mutate(p_missing= n_missing/Obs)
 #Eliminar los que no tienen datos faltantes
 data_miss<- data_miss %>% filter(n_missing!= 0)
 
 # Revisar los datos faltantes gráficamente:
-ggplot(data_miss, aes(x = reorder(skim_variable, p_missing), y = p_missing)) +
-  geom_col(fill = "skyblue", color = "white", width = 0.7) +
+
+ggplot(data_miss, aes(x = reorder(skim_variable, +p_missing) , y =  p_missing)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
   coord_flip() +
-  geom_text(aes(label = scales::percent(p_missing, accuracy = 0.1)),
-            hjust = -0.1, size = 3) +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
-  labs(
-    title = "Porcentaje de valores faltantes por variable",
-    x = "Variable",
-    y = "Porcentaje de NA"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
-    axis.text.y = element_text(size = 8)
-  )
+  labs(title = "NA por variable", x = "Variable", y = "Porcentaje de NA")+ 
+  theme(axis.text = element_text(size = 5))
 
 # Revisión de ceros en la variable dependiente
 # Contar observaciones con ingreso por hora  = 0
@@ -311,7 +302,9 @@ data_filter %>%
   ) +
   theme_minimal(base_size = 12)
 
+
 ```
+
 
 ## Revisión de outliers (valores atípicos):
 
@@ -322,8 +315,9 @@ En este bloque se evaluó la presencia de **valores atípicos** en la variable `
     -   Los valores por debajo del percentil 1% (`low`) y por encima del percentil 99% (`up`) fueron considerados potenciales outliers.
 2.  **Visualización mediante boxplot:**
     -   Se construyó un boxplot de la variable `ingreso_hora`.
-    -   Se añadieron dos líneas horizontales punteadas en color azul que marcan los límites de outliers (`low` y `up`).
+    -   Se añadieron dos líneas horizontales punteadas en color azul que marcan los límites de outliers (`low` y `up`).\
     -   Los valores atípicos fueron resaltados en color rojo dentro del gráfico.
+  
 
 ```{r}
 # Definimos límites inferior y superior de outliers usando percentiles
@@ -348,8 +342,8 @@ plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
 
 # Mostrar el gráfico
 print(plot_outlier)
-
 ```
+
 
 ## Manipulación final de datos
 
@@ -374,23 +368,23 @@ str(data_filter)
 # Cambiamos a factor las variables que son categóricas
 data_filter <- data_filter %>%
   mutate(
-    sexo = factor(sex, 
+    sex_label = factor(sex, 
                  levels = c(0, 1), 
                  labels = c("Mujer", "Hombre")),
     formal = factor(formal, 
                     levels = c(0, 1), 
                     labels = c("Informal", "Formal")),
-    relab = factor(relab,
+    relab = factor(relab, 
                    levels = c(1,2,3,4,5,6,7,8,9),
-                   labels = c("Empleado empresa",
-                               "Empleado del gobierno",
-                               "Empleado doméstico", 
-                               "Trabajador cuenta propia",
-                               "Empleador",
-                               "Trabajador familiar sin remuneración",
-                               "Trabajador sin remuneración otras empresas",
-                               "Jornalero",
-                               "Otro")),
+                   labels = c("Empleado de empresa particular",
+                              "Empleado del gobierno",
+                              "Empleado domestico",
+                              "Cuenta propia",
+                              "Empleador",
+                              "Sin remuneración (familiar)",
+                              "Sin remuneración (No familiar)",
+                              "Jornalero",
+                              "Otro")), 
     size_firm = factor(size_firm,
                        levels = c(1, 2, 3, 4, 5),
                        labels = c("auto-empleado", 
@@ -402,16 +396,12 @@ data_filter <- data_filter %>%
                             levels = c(1, 2, 3, 4, 5, 6, 7,9),
                             labels = c("Ninguno", "Preescolar", "Primaria imcompleta", 
                                        "Primaria completa", "Secundaria incompleta", "Secundaria completa", "Terceiaria", "N/A")),
-    cuenta_propia = factor(cuenta_propia, 
-                           levels = c(0, 1), 
-                           labels = c("No cuenta propia", "Cuenta propia"))
   )
 
 # Manipulación de la variable ingreso por hora para reducción de peso de outliers
 data_filter <- data_filter %>%
   filter(ingreso_hora_1> 0) %>%  # elimina ceros porque logaritmo no permite tener 0
   mutate(log_ingreso_hora = log(ingreso_hora_1))
-
 ```
 
 ## Estadísticas descriptivas de las variables
@@ -420,24 +410,23 @@ data_filter <- data_filter %>%
 
 # Tabla descriptiva general
 # Seleccionar solo las variables deseadas
-vars <- data_filter[, c("ingreso_hora_1", "age", "hours_work_usual", "max_educ_level", "sex")]
+vars <- data_filter[, c("ingreso_hora_1", "age", "hours_work_usual", "max_educ_level", "sex_label")]
 
 # Generar resumen
 datasummary_skim(vars, output = "gt", histogram = FALSE)
 
-# Tabla descriptiva por sexo
-datos <- data_filter %>%
-  mutate(sex_label = ifelse(sex == 0, "Mujer", "Hombre"))
+
 
 datasummary_balance(
   ingreso_hora_1 + age + hours_work_usual + max_educ_level ~ sex_label,
-  data = datos,
+  data = data_filter,
   fmt = 2
 )
 # Gráfico: densidad de ln(w) por sexo
 
+datos_lim <- data_filter[!is.na(data_filter$log_ingreso_hora), ]
 
-ggplot(datos, aes(x = log(ingreso_hora_1), fill = sex_label)) +
+ggplot(datos_lim, aes(x = log_ingreso_hora, fill = sex_label)) +
   geom_density(alpha = 0.6, size = 1.1, color = NA) +
   scale_fill_manual(values = c("Mujer" = "#F8BBD0", "Hombre" = "#1E88E5")) +
   labs(
@@ -456,10 +445,12 @@ ggplot(datos, aes(x = log(ingreso_hora_1), fill = sex_label)) +
     axis.title = element_text(face = "bold")
   )
 
+
+
 ```
 
 ```{r}
-ggplot(data_filter, aes(x = max_educ_level, y = log(ingreso_hora_1))) +
+ggplot(datos_lim, aes(x = max_educ_level, y = log_ingreso_hora)) +
   geom_boxplot(fill = "#81D4FA") +
   labs(
     title = "Salario horario por nivel educativo",
@@ -481,7 +472,7 @@ ggplot(data_filter, aes(x = max_educ_level, y = log(ingreso_hora_1))) +
 ```{r}
 
 # Calcular proporciones
-porcentajes <- data_filter %>%
+porcentajes <- datos_lim %>%
   count(formal) %>%
   mutate(
     prop = n / sum(n),
@@ -524,9 +515,9 @@ $$
 $$
 
 ```{r}
-datos_lim<-data_filter
 
-wage_gap <- lm(log_ingreso_hora ~ sexo, data = datos_lim)
+
+wage_gap <- lm(log_ingreso_hora ~ sex_label, data = datos_lim)
 
 #Visualización de tabla
 
@@ -541,7 +532,7 @@ tidy(wage_gap, conf.int = TRUE) %>%
 
 
 # Interpretación en porcentaje
-gap_incond <- 100*(exp(coef(wage_gap)["sexo"]) - 1)
+gap_incond <- 100*(exp(coef(wage_gap)["sex_label"]) - 1)
 gap_incond
 
 
@@ -562,7 +553,7 @@ donde:
 
 ```{r}
 # Filtro de datos
-gap_cond <- lm(log_ingreso_hora~ sexo + age + I(age^2) + max_educ_level +
+gap_cond <- lm(log_ingreso_hora~ sex_label + age + I(age^2) + max_educ_level +
                relab + formal + size_firm, 
              data = datos_lim)
 #Visualización de tabla
@@ -576,7 +567,7 @@ tidy(gap_cond, conf.int = TRUE) %>%
   fmt_number(columns = c(estimate, std.error, statistic, p.value, conf.low, conf.high), decimals = 2)
 
 # Interpretación en porcentaje
-gap_cond <- 100*(exp(coef(gap_cond)["sex"]) - 1)
+gap_cond <- 100*(exp(coef(gap_cond)["sex_label"]) - 1)
 gap_cond
 
 ```
@@ -651,3 +642,5 @@ results <- data.frame(
 results
 
 ```
+
+
