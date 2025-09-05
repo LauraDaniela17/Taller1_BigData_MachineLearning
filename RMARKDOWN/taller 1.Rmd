@@ -29,7 +29,7 @@ Comparando la regresión lineal, polinomiales y otros métodos como LASSO y Rand
 Los resultados nos dicen que \_\_\_\_XXXXXX\_\_\_\_.
 
 Investigar sobre como se distribuyen los ingresos que se generan del trabajo y que factores contribuyen a las diferencias salariales ha sido un tema importante en los estudios económicos y políticos.
-
+ 
 ## Configuración inicial
 
 El primer bloque de código se utiliza para preparar el entorno de trabajo antes de iniciar el análisis de los datos.
@@ -630,7 +630,7 @@ boot_fwl <- function(data, index){
               data = d)$residuals
   coef(lm(r_w ~ r_sex))[2]
 }
-
+ 
 set.seed(123)
 boot_res <- boot(data = datos_lim, statistic = boot_fwl, R = 500)
 boot.ci(boot_res, type="perc")
