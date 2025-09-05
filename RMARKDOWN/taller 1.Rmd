@@ -4,23 +4,43 @@ author: Zeneth Olivero Tapia, Cristian Felipe Muñoz Guerrero, Laura Daniela Tor
   Diaz, Vivian Cabanzo Fernandez
 date: "`r Sys.Date()`"
 output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: sentence
 ---
 
-#  1 Intriducción
+# 1 Intriducción
 
-La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos. Entender estos factores de edad, los estudios, el tiempo trabajado, la ocupación y el género en los ingresos permite no solo explicar las desigualdades en el mercado laboral, sino también buscar formas más justas y eficientes en la asignación de recursos. Por eso, esta presente investigación busca analizar cómo cambia el ingreso en edad – salario, la brecha salarial de género y la ejecución de diversos modelos de predicción de ingresos en Bogotá, haciendo uso de datos sobre la población ocupada.
+La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos.
+Entender estos factores de edad, los estudios, el tiempo trabajado, la ocupación y el género en los ingresos permite no solo explicar las desigualdades en el mercado laboral, sino también buscar formas más justas y eficientes en la asignación de recursos.
+Por eso, esta presente investigación busca analizar cómo cambia el ingreso en edad – salario, la brecha salarial de género y la ejecución de diversos modelos de predicción de ingresos en Bogotá, haciendo uso de datos sobre la población ocupada.
 
-La fuente de información tomada es la Gran Encuesta Integrada de Hogares (GEIH) 2018, elaborada por el DANE, elaboramos una muestra de personas que viven en Bogotá. Es una encuesta adecuada para el propósito del análisis, ya que incluye datos claves como el ingreso laboral, caracterización, demográficas y condiciones laborales. Esto nos permite hacer uso de variables para estimaciones que reflejan las diferencias observables entre individuos como los patrones generales del mercado laboral.
+La fuente de información tomada es la Gran Encuesta Integrada de Hogares (GEIH) 2018, elaborada por el DANE, elaboramos una muestra de personas que viven en Bogotá.
+Es una encuesta adecuada para el propósito del análisis, ya que incluye datos claves como el ingreso laboral, caracterización, demográficas y condiciones laborales.
+Esto nos permite hacer uso de variables para estimaciones que reflejan las diferencias observables entre individuos como los patrones generales del mercado laboral.
 
-En el primero componente, nos enfocamos en el análisis en el perfil edad – salario, estimando la relación entre la edad de los trabajadores y su ingreso por hora. Se evidencia que los ingresos aumentan con la edad y la experiencia hasta alcanzar un punto máximo en la mediana edad (40 – 45 años de edad), seguido tiende a estabilizarse y/o decrecer, tal como lo indica la teoría del capital humano. El segundo componente abordamos la brecha salarial de género, que siguen después de controlar por variables de educación y experiencia. Aunque parte de la diferencia es por variables observables, y el análisis sugiere factores más profundos como una posible discriminación en diversos aspectos.
+En el primero componente, nos enfocamos en el análisis en el perfil edad – salario, estimando la relación entre la edad de los trabajadores y su ingreso por hora.
+Se evidencia que los ingresos aumentan con la edad y la experiencia hasta alcanzar un punto máximo en la mediana edad (40 – 45 años de edad), seguido tiende a estabilizarse y/o decrecer, tal como lo indica la teoría del capital humano.
+El segundo componente abordamos la brecha salarial de género, que siguen después de controlar por variables de educación y experiencia.
+Aunque parte de la diferencia es por variables observables, y el análisis sugiere factores más profundos como una posible discriminación en diversos aspectos.
 
-Por último, se evalúa que tan bien predicen distintos modelos econométricos. Comparando la regresión lineal, polinomiales y otros métodos como LASSO y Random Forest. Los resultados nos dicen que \_\_\_\_XXXXXX\_\_\_\_.
+Por último, se evalúa que tan bien predicen distintos modelos econométricos.
+Comparando la regresión lineal, polinomiales y otros métodos como LASSO y Random Forest.
+Los resultados nos dicen que \_\_\_\_XXXXXX\_\_\_\_.
 
 Investigar sobre como se distribuyen los ingresos que se generan del trabajo y que factores contribuyen a las diferencias salariales ha sido un tema importante en los estudios económicos y políticos.
 
 ## Configuración inicial
 
-En esta sección se establece la configuración inicial y las librerías necesarias.
+El primer bloque de código se utiliza para preparar el entorno de trabajo antes de iniciar el análisis de los datos.
+
+1.  **Configuración de `knitr`**
+
+2.  **Gestión de librerías con `pacman`**\
+    Se verifica si el paquete `pacman` está instalado y, en caso contrario, se instala.
+
+3.  **Carga de librerías para el análisis**\
+    Cargue de librerías necesarias
 
 ```{r setup, include=FALSE}
 
@@ -51,14 +71,34 @@ pacman::p_load(rvest, #Web scrapping
                tidyverse, #Manipulación de datos
                styler, #Estilo de código
                corrplot, #Matrices de correlación
-               boot) #Bootstrap
+               boot, #Bootstrap
+               modelsummary, #Resuménes en tablas
+               scales,  # Para formatear ejes
+               gt, #Mejores tablas
+               broom)  
 ```
 
 # 2. Datos
 
 ### Web scraping
 
-En este primer apartado extraemos los datos de la página: : <https://ignaciomsarmiento>. github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaciones
+En este bloque se realiza la **extracción automática de los datos** de la Gran Encuesta Integrada de Hogares (GEIH) 2018 para Bogotá, disponible en el sitio web del profesor Ignacio Sarmiento:
+<https://ignaciomsarmiento.github.io/GEIH2018_sample/>.
+
+1.  **Generación de URLs de las paginaciones**
+    Los datos se encuentran distribuidos en **10 páginas HTML**.
+    Se construye un vector de URLs concatenando la dirección base con los números del 1 al 10.
+
+2.  **Función de extracción de tablas**
+    Se define la función `funcion_para_leer_tablas()` que:
+
+    -   Lee el contenido HTML de cada página con `read_html()`.
+    -   Selecciona la primera tabla encontrada en la página (`html_elements(...)[[1]]`).
+    -   Convierte dicha tabla en un `data.frame` con `html_table()`.
+    -   Limpia los nombres de las variables y ajusta los tipos de datos con `clean_names()` y `type_convert()`.
+
+3.  **Unificación de los datos en una sola base**
+    Se aplica la función a todas las URLs con `map_dfr()`, lo que permite **leer y combinar las 10 tablas en un único `data.frame` (`data_completa`)**.
 
 ```{r cars}
 
@@ -67,7 +107,7 @@ urls <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_p
 
 funcion_para_leer_tablas <- function(a) {
   pagina <- read_html(a)  #Leer el html
-  tabla_html <- html_elements(pagina, "table")[[1]] #Estrae la primera página
+  tabla_html <- html_elements(pagina, "table")[[1]] #Extrae la primera página
   data <- html_table(tabla_html, trim = TRUE)  #Convertir el html a data frame
   data <- data %>% clean_names() %>% type_convert() #Limpiar nombres y cambiar tipos de datos
   return(data)
@@ -122,27 +162,31 @@ nrow(data_filter) #16.542 observaciones
 
 ## elección de variables
 
-En este bloque se depura la base de datos filtrada (`data_filter`) para trabajar únicamente con las variables relevantes:
+En este bloque se depura la base de datos filtrada (`data_filter`) para trabajar únicamente con las variables relevantes y se crea la variable de interés
 
-Se conservan únicamente las siguientes columnas de interés:\
-- `directorio`, `secuencia_p`, `orden`: variables de identificación del individuo.\
-- `sex`: sexo.\
-- `age`: edad.\
-- `oficio`: ocupación declarada.\
-- `mes`: mes en la que se realizó la encuesta.\
-- `formal`: formalidad del trabajo.\
-- `size_firm`: tamaño de la firma donde trabaja.\
-- `max_educ_level`: máximo nivel educativo alcanzado.\
-- `y_total_m_ha`: Ingreso total de asalariados + independientes por hora (nominal) - `ingtotob`: ingreso total observado.\
-- `hours_work_usual`: horas trabajadas usualmente por semana. - `cuenta_propia`: Trabajador por cuenta propia
+Se conservan únicamente las siguientes columnas de interés: - `directorio`, `secuencia_p`, `orden`: variables de identificación del individuo.
+- `sex`: sexo.
+- `age`: edad.
+- `relab``: tipo de ocupacion.
+- `mes`: mes en la que se realizó la encuesta.
+- `formal`: formalidad del trabajo.
+- `size_firm`: tamaño de la firma donde trabaja.
+- `max_educ_level`: máximo nivel educativo alcanzado.
+- `impa`: Ingreso monetario primera actividad antes de imputación.
+- `hours_work_usual`: horas trabajadas usualmente por semana.
+- `cuenta_propia`: Trabajador por cuenta propia
+
+Creamos la variable dependiente de la siguiente manera: - **Númerador**: `impa` - **Denominador**: `hours_work_usual` \* 4.33 - Donde `4.33` corresponde al promedio de semanas en un mes (52 semanas / 12 meses).
 
 ```{r}
 # Con el nombre de las variables ya revisadas y 
-data_filter<- data_filter%>% select(directorio, secuencia_p, orden,sex, age, oficio, mes,
-                                        formal, size_firm, max_educ_level, y_total_m_ha, ingtotob, hours_work_usual, cuenta_propia)
+data_filter<- data_filter%>% select(directorio, secuencia_p, orden,sex, age, relab, mes,
+                                        formal, size_firm, max_educ_level, impa, hours_work_usual, cuenta_propia)
 
-# OPCIONAL: creación propia variable ingreso-hora
-data_filter<- data_filter%>%mutate(ingreso_hora_1 = (ingtotob/(hours_work_usual*4.33)))
+#Creación variable dependiente
+data_filter<- data_filter%>%
+  mutate(ingreso_hora_1 = (impa/(hours_work_usual*4.33)))
+
 ```
 
 ## Revisión inicial de los datos
@@ -198,11 +242,9 @@ list(
 data_filter <- data_filter %>%
   select(-secuencia_p,-directorio,-orden,-mes)
 
-
-
 ```
 
-## Revisión valores faltantes
+## Revisión valores faltantes y ceros en la variable de ing43wo
 
 En este bloque de código se realiza un análisis exploratorio de los valores faltantes en la base de datos `data_filter`, siguiendo los pasos:
 
@@ -218,8 +260,6 @@ En este bloque de código se realiza un análisis exploratorio de los valores fa
     -   Se incluye:
         -   Ordenamiento de las variables de mayor a menor porcentaje de faltantes.\
         -   Etiquetas con el porcentaje exacto sobre cada barra.
-5.  **Hallazgo clave**
-    -   Se identificó que alrededor del **10% de los registros de la variable `y_total_m_ha`** presentan valores faltantes, lo que debe tenerse en cuenta en los análisis posteriores.
 
 ```{r}
 # Revisamos valores faltantes:
@@ -249,7 +289,28 @@ ggplot(data_miss, aes(x = reorder(skim_variable, p_missing), y = p_missing)) +
     axis.text.y = element_text(size = 8)
   )
 
-# EL 10% de los valores de la variable y_total_m_ha son faltantes
+# Revisión de ceros en la variable dependiente
+# Contar observaciones con ingreso por hora  = 0
+n_ceros <- sum(data_filter$ingreso_hora_1 == 0, na.rm = TRUE)
+
+# Calcular el porcentaje de ceros respecto al total
+p_ceros <- n_ceros / Obs
+
+
+# Gráfico simple para visualizar ceros vs. positivos
+data_filter %>%
+  mutate(ingreso_cero = ifelse(ingreso_hora_1 == 0, "0", "Mayor a 0")) %>%
+  count(ingreso_cero) %>%
+  ggplot(aes(x = ingreso_cero, y = n, fill = ingreso_cero)) +
+  geom_col(show.legend = FALSE, width = 0.6) +
+  geom_text(aes(label = n), vjust = -0.5) +
+  labs(
+    title = "Distribución de ingresos iguales a 0 vs. mayores a 0",
+    x = "Tipo de ingreso",
+    y = "Observaciones"
+  ) +
+  theme_minimal(base_size = 12)
+
 ```
 
 ## Revisión de outliers (valores atípicos):
@@ -257,11 +318,11 @@ ggplot(data_miss, aes(x = reorder(skim_variable, p_missing), y = p_missing)) +
 En este bloque se evaluó la presencia de **valores atípicos** en la variable `ingreso_hora`.
 
 1.  **Cálculo de límites de referencia:**
-    -   Se definieron los percentiles 1% y 99% como puntos de corte.\
+    -   Se definieron los percentiles 1% y 99% como puntos de corte.
     -   Los valores por debajo del percentil 1% (`low`) y por encima del percentil 99% (`up`) fueron considerados potenciales outliers.
 2.  **Visualización mediante boxplot:**
-    -   Se construyó un boxplot de la variable `ingreso_hora`.\
-    -   Se añadieron dos líneas horizontales punteadas en color azul que marcan los límites de outliers (`low` y `up`).\
+    -   Se construyó un boxplot de la variable `ingreso_hora`.
+    -   Se añadieron dos líneas horizontales punteadas en color azul que marcan los límites de outliers (`low` y `up`).
     -   Los valores atípicos fueron resaltados en color rojo dentro del gráfico.
 
 ```{r}
@@ -273,20 +334,38 @@ up  <- quantile(data_filter$ingreso_hora_1, 0.99, na.rm = TRUE)   # Percentil 99
 low
 up
 
-# Creamos boxplot para visualizar distribución de ingreso por hora
+# Creamos boxplot para visualizar distribución de ingreso por hora (en log)
 plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
   geom_boxplot(fill = "skyblue", outlier.color = "red", outlier.size = 1) + # boxplot con outliers resaltados
   geom_hline(yintercept = low, color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite inferior
-  labs(title = "Boxplot de salario horario con límites de outliers", y = "Ingreso por hora", x = "") +
+  geom_hline(yintercept = up,  color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite superior
+  labs(
+    title = "Boxplot de salario horario con límites de outliers",
+    y = "Log(Ingreso por hora)",
+    x = ""
+  ) +
   theme_minimal()
 
 # Mostrar el gráfico
-print(plot_outlier)  
-
+print(plot_outlier)
 
 ```
 
 ## Manipulación final de datos
+
+En esta etapa se realizaron dos procesos fundamentales:
+
+1.  **transformación de variables categóricas:**\
+    Se identificaron aquellas variables que originalmente estaban codificadas con números enteros pero que representan categorías. Estas fueron convertidas a factores y se les asignaron etiquetas descriptivas para facilitar su interpretación.
+    -   `sex` → `sexo`: recodificada como **Mujer** y **Hombre**.\
+    -   `formal`: clasificada en **Informal** y **Formal**.
+    -   `oficio`: transformada en factor.
+    -   `size_firm`: recodificada en categorías que representan el **tamaño de la empresa** (auto-empleado, 2–5 empleados, 6–10 empleados, 11–15 empleados y más de 50).\
+    -   `max_educ_level`: recodificada a niveles educativos alcanzados (ninguno, preescolar, primaria, secundaria, terciaria, N/A).\
+    -   `cuenta_propia`: categorizada en **Cuenta propia** y **No cuenta propia**.
+2.  **Tratamiento de la variable de ingresos:**
+    -   Se eliminan las observaciones con **ingreso por hora igual a cero**, dado que no son válidas para el análisis de logaritmos y, además, podrían distorsionar la interpretación del salario.\
+    -   Se crea la nueva variable `log_ingreso_hora`, que corresponde al **logaritmo natural del ingreso por hora**. Esta transformación ayuda a reducir la influencia de valores atípicos (outliers) y aproxima la distribución de la variable a una forma más cercana a la normalidad.
 
 ```{r}
 # Revisamos nuevamente la estructura de los datos
@@ -295,12 +374,37 @@ str(data_filter)
 # Cambiamos a factor las variables que son categóricas
 data_filter <- data_filter %>%
   mutate(
-    sex = as.factor(sex),
-    formal = as.factor(formal),
-    oficio = as.factor(oficio),
-    size_firm = as.factor(size_firm),
-    max_educ_level = as.factor(max_educ_level),
-    cuenta_propia = as.factor(cuenta_propia)
+    sexo = factor(sex, 
+                 levels = c(0, 1), 
+                 labels = c("Mujer", "Hombre")),
+    formal = factor(formal, 
+                    levels = c(0, 1), 
+                    labels = c("Informal", "Formal")),
+    relab = factor(relab,
+                   levels = c(1,2,3,4,5,6,7,8,9),
+                   labels = c("Empleado empresa",
+                               "Empleado del gobierno",
+                               "Empleado doméstico", 
+                               "Trabajador cuenta propia",
+                               "Empleador",
+                               "Trabajador familiar sin remuneración",
+                               "Trabajador sin remuneración otras empresas",
+                               "Jornalero",
+                               "Otro")),
+    size_firm = factor(size_firm,
+                       levels = c(1, 2, 3, 4, 5),
+                       labels = c("auto-empleado", 
+                                  "2-5 empleados", 
+                                  "6-510 empleados", 
+                                  "11-15 empleados", 
+                                  "Más de 50")),
+    max_educ_level = factor(max_educ_level,
+                            levels = c(1, 2, 3, 4, 5, 6, 7,9),
+                            labels = c("Ninguno", "Preescolar", "Primaria imcompleta", 
+                                       "Primaria completa", "Secundaria incompleta", "Secundaria completa", "Terceiaria", "N/A")),
+    cuenta_propia = factor(cuenta_propia, 
+                           levels = c(0, 1), 
+                           labels = c("No cuenta propia", "Cuenta propia"))
   )
 
 # Manipulación de la variable ingreso por hora para reducción de peso de outliers
@@ -310,17 +414,9 @@ data_filter <- data_filter %>%
 
 ```
 
-
-
-## 2.d.Estadísticas descriptivas de las variables
+## Estadísticas descriptivas de las variables
 
 ```{r}
-names(data_filter) 
-
-library(dplyr)
-library(ggplot2)
-library(modelsummary)
-
 
 # Tabla descriptiva general
 # Seleccionar solo las variables deseadas
@@ -340,8 +436,6 @@ datasummary_balance(
 )
 # Gráfico: densidad de ln(w) por sexo
 
-library(ggplot2)
-library(scales)  # Para formatear ejes si lo deseas
 
 ggplot(datos, aes(x = log(ingreso_hora_1), fill = sex_label)) +
   geom_density(alpha = 0.6, size = 1.1, color = NA) +
@@ -385,7 +479,6 @@ ggplot(data_filter, aes(x = max_educ_level, y = log(ingreso_hora_1))) +
 ```
 
 ```{r}
-library(dplyr)
 
 # Calcular proporciones
 porcentajes <- data_filter %>%
@@ -431,27 +524,14 @@ $$
 $$
 
 ```{r}
-#tipo de valores
-summary(datos$ingreso_hora_1)
-any(is.na(datos$ingreso_hora_1))       # ¿Hay NA?
-any(is.nan(datos$ingreso_hora_1))      # ¿Hay NaN?
-any(is.infinite(datos$ingreso_hora_1)) # ¿Hay Inf?
-any(datos$ingreso_hora_1 <= 0)         # ¿Hay ceros o negativos?
+datos_lim<-data_filter
 
-#Observaciones excluidas
-table(datos$ingreso_hora_1 == 0, useNA = "ifany")
-
-# Filtro de datos
-datos_lim <- datos %>%
-  filter(!is.na(ingreso_hora_1), ingreso_hora_1 > 0)
-
-wage_gap <- lm(log(ingreso_hora_1) ~ sex, data = datos_lim)
+wage_gap <- lm(log_ingreso_hora ~ sexo, data = datos_lim)
 
 #Visualización de tabla
-library(gt)
 
 tidy(wage_gap, conf.int = TRUE) %>%
-  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sex" = "Sexo (1 = hombres)")) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sexo" = "Sexo (1 = hombres)")) %>%
   gt() %>%
   tab_header(
     title = "Estimación de Brecha Salarial",
@@ -461,8 +541,9 @@ tidy(wage_gap, conf.int = TRUE) %>%
 
 
 # Interpretación en porcentaje
-gap_incond <- 100*(exp(coef(wage_gap)["sex"]) - 1)
+gap_incond <- 100*(exp(coef(wage_gap)["sexo"]) - 1)
 gap_incond
+
 
 ```
 
@@ -476,17 +557,17 @@ donde:
 
 -   $w$: salario\
 -   $\text{sex}$: variable binaria de sexo\
--   $X = \{ \text{edad}, \text{edad}^2, \text{educación}, \text{oficio}, \text{formalidad}, \text{tamaño de empresa}, \text{horas} \}$\
+-   $X = \{ \text{edad}, \text{edad}^2, \text{educación}, \text{oficio}, \text{formalidad}, \text{tamaño de empresa} \}$\
 -   $u$: término de error aleatorio
 
 ```{r}
 # Filtro de datos
-gap_cond <- lm(log(ingreso_hora_1) ~ sex + age + I(age^2) + max_educ_level +
-               oficio + formal + size_firm + hours_work_usual, 
+gap_cond <- lm(log_ingreso_hora~ sexo + age + I(age^2) + max_educ_level +
+               relab + formal + size_firm, 
              data = datos_lim)
 #Visualización de tabla
 tidy(gap_cond, conf.int = TRUE) %>%
-  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sex" = "Sexo (1 = hombres)")) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sexo" = "Sexo (1 = hombres)")) %>%
   gt() %>%
   tab_header(
     title = "Estimación de Brecha Condicional con Controles",
@@ -499,17 +580,18 @@ gap_cond <- 100*(exp(coef(gap_cond)["sex"]) - 1)
 gap_cond
 
 ```
+
 # 4.b.i FWL (Frisch-Waugh-Lovell)
 
 ```{r}
 # Paso 1: sex ~ X
 res_sex <- lm(sex ~ age + I(age^2) + max_educ_level +
-                 oficio + formal + size_firm + hours_work_usual, 
+                 relab + formal + size_firm , 
               data = datos_lim)$residuals
 
 # Paso 2: ln(w) ~ X
-res_w <- lm(log(ingreso_hora_1) ~ age + I(age^2) + max_educ_level +
-               oficio + formal + size_firm + hours_work_usual, 
+res_w <- lm(log_ingreso_hora ~ age + I(age^2) + max_educ_level +
+              relab + formal + size_firm , 
             data = datos_lim)$residuals
 
 # Paso 3: residuales
@@ -528,7 +610,9 @@ tidy(m_fwl, conf.int = TRUE) %>%
 
 # Interpretación en porcentaje
 gap_fwl <- 100*(exp(coef(m_fwl)["res_sex"]) - 1)
-gap_fwl
+gap_fwl  
+
+
 ```
 
 # 4.b.ii FWL con bootstrap
@@ -539,10 +623,10 @@ gap_fwl
 boot_fwl <- function(data, index){
   d <- data[index, ]
   r_sex <- lm(sex ~ age + I(age^2) + max_educ_level +
-                 oficio + formal + size_firm + hours_work_usual, 
+                 relab + formal + size_firm, 
               data = d)$residuals
-  r_w   <- lm(log(ingreso_hora_1) ~ age + I(age^2) + max_educ_level +
-                 oficio + formal + size_firm + hours_work_usual, 
+  r_w   <- lm(log_ingreso_hora ~ age + I(age^2) + max_educ_level +
+                 relab + formal + size_firm , 
               data = d)$residuals
   coef(lm(r_w ~ r_sex))[2]
 }
@@ -551,7 +635,19 @@ set.seed(123)
 boot_res <- boot(data = datos_lim, statistic = boot_fwl, R = 500)
 boot.ci(boot_res, type="perc")
 
+# Estimador FWL clásico
+beta_fwl <- coef(m_fwl)["res_sex"]
+se_fwl   <- summary(m_fwl)$coefficients["res_sex", "Std. Error"]
+
+# Estimador FWL bootstrap
+beta_boot <- mean(boot_res$t)
+se_boot   <- sd(boot_res$t)
+
+results <- data.frame(
+  Metodo = c("FWL clásico", "FWL bootstrap"),
+  Estimador = c(beta_fwl, beta_boot),
+  SE = c(se_fwl, se_boot)
+)
+results
+
 ```
-
-
-
