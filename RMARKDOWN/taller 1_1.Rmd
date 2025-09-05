@@ -1,0 +1,914 @@
+---
+title: "Taller 1 BDML"
+author: Zeneth Olivero Tapia, Cristian Felipe Muñoz Guerrero, Laura Daniela Torres
+  Diaz, Vivian Cabanzo Fernandez
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+#  1 Intriducción
+
+La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos. Entender estos factores de edad, los estudios, el tiempo trabajado, la ocupación y el género en los ingresos permite no solo explicar las desigualdades en el mercado laboral, sino también buscar formas más justas y eficientes en la asignación de recursos. Por eso, esta presente investigación busca analizar cómo cambia el ingreso en edad – salario, la brecha salarial de género y la ejecución de diversos modelos de predicción de ingresos en Bogotá, haciendo uso de datos sobre la población ocupada.
+
+La fuente de información tomada es la Gran Encuesta Integrada de Hogares (GEIH) 2018, elaborada por el DANE, elaboramos una muestra de personas que viven en Bogotá. Es una encuesta adecuada para el propósito del análisis, ya que incluye datos claves como el ingreso laboral, caracterización, demográficas y condiciones laborales. Esto nos permite hacer uso de variables para estimaciones que reflejan las diferencias observables entre individuos como los patrones generales del mercado laboral.
+
+En el primero componente, nos enfocamos en el análisis en el perfil edad – salario, estimando la relación entre la edad de los trabajadores y su ingreso por hora. Se evidencia que los ingresos aumentan con la edad y la experiencia hasta alcanzar un punto máximo en la mediana edad (40 – 45 años de edad), seguido tiende a estabilizarse y/o decrecer, tal como lo indica la teoría del capital humano. El segundo componente abordamos la brecha salarial de género, que siguen después de controlar por variables de educación y experiencia. Aunque parte de la diferencia es por variables observables, y el análisis sugiere factores más profundos como una posible discriminación en diversos aspectos.
+
+Por último, se evalúa que tan bien predicen distintos modelos econométricos. Comparando la regresión lineal, polinomiales y otros métodos como LASSO y Random Forest. Los resultados nos dicen que \_\_\_\_XXXXXX\_\_\_\_.
+
+Investigar sobre como se distribuyen los ingresos que se generan del trabajo y que factores contribuyen a las diferencias salariales ha sido un tema importante en los estudios económicos y políticos.
+
+## Configuración inicial
+
+En esta sección se establece la configuración inicial y las librerías necesarias.
+
+```{r setup, include=FALSE}
+
+# Configuración de knitr y carga de paquetes para análisis, limpieza y manipulación de datos
+
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	fig.height = 6,
+	fig.width = 10,
+	message = FALSE,
+	warning = TRUE, 
+	tidy = TRUE,               
+  tidy.opts = list(width.cutoff = 60)  
+)
+
+# Instalar y cargar pacman (gestor de paquetes) y otras librerías para análisis de datos
+
+if (!require("pacman")) install.packages("pacman")
+library(pacman)
+pacman::p_load(rvest, #Web scrapping
+               dplyr, #Manipulación de datos
+               tidyr, #Manipúlación de datos
+               readr, #Lectura de archivos csv
+               janitor, #Limpieza rapida 
+               purrr, #Programación funcional
+               skimr, #Resumén descriptivo
+               tidyverse, #Manipulación de datos
+               styler, #Estilo de código
+               corrplot, #Matrices de correlación
+               boot) #Bootstrap
+```
+
+# 2. Datos
+
+### Web scraping
+
+En este primer apartado extraemos los datos de la página: : <https://ignaciomsarmiento>. github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaciones
+
+```{r cars}
+
+# Generamos URL: contiene un vector de 10 paginaciones
+urls <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_", 1:10, ".html")
+
+funcion_para_leer_tablas <- function(a) {
+  pagina <- read_html(a)  #Leer el html
+  tabla_html <- html_elements(pagina, "table")[[1]] #Estrae la primera página
+  data <- html_table(tabla_html, trim = TRUE)  #Convertir el html a data frame
+  data <- data %>% clean_names() %>% type_convert() #Limpiar nombres y cambiar tipos de datos
+  return(data)
+}
+
+data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior para todas las 10 paginaciones 
+
+```
+
+## Manipulación y limpieza de datos:
+
+Los siguientes bloque de código tiene como propósito preparar la base de datos para el análisis incluyendo los siguientes pasos:
+
+## Escogencia muestral
+
+En este bloque se realiza una exploración preliminar de la base `data_completa` y la escogencia muestra:
+
+1.  **Revisión de la estructura de los datos**
+    -   Se utiliza `str(data_completa)` para identificar la estructura general de la base, encontrando que existen múltiples valores faltantes (NA) y que los tipos de datos más comunes son `character`, `integer` y `numeric`.\
+    -   Se listan los nombres de todas las variables con `names(data_completa)`.\
+    -   Se visualizan las primeras (`head()`) y últimas (`tail()`) observaciones para inspeccionar rápidamente el contenido.
+2.  **Selección de variables de interés**
+    -   Se identifican como relevantes las variables `age` (edad) y `ocu` (condición de ocupación).
+3.  **Filtrado de la muestra**
+    -   Se excluyen observaciones de individuos **menores de 18 años**.\
+    -   Se conservan únicamente aquellos que reportan estar **ocupados (`ocu == 1`)**.
+4.  **Revisión del tamaño muestral filtrado**
+    -   Tras aplicar los filtros, la base resultante (`data_filter`) contiene **16.542 observaciones**.
+
+```{r}
+## Revisión inicial: 
+# str para revisar la estructura de los datos
+str(data_completa) #Vemos que hay una gran cantidad de NA y que los tipos mas comunes de datos son character, integrer, y numeral
+# Names para identificar los nombres de todas las variables
+names(data_completa) 
+# head para ver las primeras observaciones
+head(data_completa)
+# tail para ver las ultimas   
+tail(data_completa)
+
+# Una vez encontrada las variables de interés para la selección de la muestra, 
+# las cuales son age y ocu, procedemos a filtrar data_completa
+
+## Filtramos observaciones inferiores a los 18 años de edad y no ocupados
+data_filter <- data_completa%>%
+  filter(age >= 18)%>%filter(ocu==1)
+
+# Revisamos nuevamente la cantidad de observaciones
+nrow(data_filter) #16.542 observaciones
+
+```
+
+## elección de variables
+
+En este bloque se depura la base de datos filtrada (`data_filter`) para trabajar únicamente con las variables relevantes:
+
+Se conservan únicamente las siguientes columnas de interés:\
+- `directorio`, `secuencia_p`, `orden`: variables de identificación del individuo.\
+- `sex`: sexo.\
+- `age`: edad.\
+- `oficio`: ocupación declarada.\
+- `mes`: mes en la que se realizó la encuesta.\
+- `formal`: formalidad del trabajo.\
+- `size_firm`: tamaño de la firma donde trabaja.\
+- `max_educ_level`: máximo nivel educativo alcanzado.\
+- `y_total_m_ha`: Ingreso total de asalariados + independientes por hora (nominal) - `ingtotob`: ingreso total observado.\
+- `hours_work_usual`: horas trabajadas usualmente por semana. - `cuenta_propia`: Trabajador por cuenta propia
+
+```{r}
+# Con el nombre de las variables ya revisadas y 
+data_filter<- data_filter%>% select(directorio, secuencia_p, orden,sex, age, oficio, mes,
+                                        formal, size_firm, max_educ_level, y_total_m_ha, ingtotob, hours_work_usual, cuenta_propia)
+
+# OPCIONAL: creación propia variable ingreso-hora
+data_filter<- data_filter%>%mutate(ingreso_hora_1 = (ingtotob/(hours_work_usual*4.33)))
+```
+
+## Revisión inicial de los datos
+
+En esta sección se realizó una exploración preliminar de la base de datos con los siguientes objetivos:
+
+1.  **Identificación de individuos únicos**
+    -   Se construyó una llave de identificación (`id_individuo`) combinando variables como `directorio`, `secuencia_p` y `orden`.\
+    -   Con esta llave se verificó cuántos individuos únicos había en la base, evitando duplicados accidentales.
+2.  **Conteo de meses observados**
+    -   Se revisó cuántos meses distintos aparecen en la información de la GEIH.\
+    -   Esto permitió confirmar la cobertura temporal de los datos.
+3.  **Seguimiento de individuos a lo largo del tiempo**
+    -   Se verificó si un mismo individuo (`id_individuo`) aparece en varios meses.\
+    -   De esta manera se buscó identificar casos de panel (individuos observados más de una vez) y diferenciarlos de observaciones transversales (solo un mes).
+
+```{r}
+
+#Revisamos cantidad de meses que hay en la base:
+n_meses <- data_filter %>%
+  summarise(total_meses = n_distinct(mes)) %>%
+  pull(total_meses)  #12 meses 
+
+# Creamos el ID único para cada persona según la documentación de la GEIH
+data_filter<- data_filter %>%
+  mutate(id_individuo = paste(directorio, secuencia_p, orden, sep = "_"))
+
+# Quitar duplicados a nivel individuo-mes
+df_unicos <- data_filter%>%
+  distinct(id_individuo, mes)
+
+# Contar en cuántos meses aparece cada individuo:
+individuos_completos <- df_unicos %>%
+  group_by(id_individuo) %>%
+  summarise(n_meses_individuo = n_distinct(mes), .groups = "drop") %>%
+  mutate(esta_en_todos = n_meses_individuo == n_meses) #Cada individuo está en solo un mes
+
+# Número total de individuos únicos:
+total_individuos <- n_distinct(data_filter$id_individuo) 
+
+# Número de individuos que aparecen en todos los meses
+n_en_todos <- sum(individuos_completos$esta_en_todos)
+
+#Resultados a nivel individuo
+list(
+  total_individuos = total_individuos, #16542 individuos
+  meses_totales = n_meses, #12 meses
+  individuos_en_todos_los_meses = n_en_todos #Ningún individuo se repite en ningún mes
+)
+
+# Eliminamos directorio, secuencia_p, orden, mes (ya no las necesitamos)
+# Manipulación de NA: 
+data_filter <- data_filter %>%
+  select(-secuencia_p,-directorio,-orden,-mes)
+
+
+
+```
+
+## Revisión valores faltantes
+
+En este bloque de código se realiza un análisis exploratorio de los valores faltantes en la base de datos `data_filter`, siguiendo los pasos:
+
+1.  **Identificación de valores faltantes**
+    -   Se usa la función `skim()` para obtener un resumen de cada variable, extrayendo el número de valores faltantes (`n_missing`).
+2.  **Cálculo del porcentaje de valores faltantes**
+    -   Se obtiene el número total de observaciones (`Obs = nrow(data_filter)`).\
+    -   Se calcula el porcentaje de valores faltantes para cada variable dividiendo `n_missing / Obs`.
+3.  **Filtrado de variables relevantes**
+    -   Se eliminan las variables que no presentan valores faltantes (`n_missing = 0`) para centrar el análisis solo en aquellas con datos ausentes.
+4.  **Visualización gráfica**
+    -   Se construye un gráfico de barras con `ggplot2` que muestra el **porcentaje de valores faltantes por variable**.\
+    -   Se incluye:
+        -   Ordenamiento de las variables de mayor a menor porcentaje de faltantes.\
+        -   Etiquetas con el porcentaje exacto sobre cada barra.
+5.  **Hallazgo clave**
+    -   Se identificó que alrededor del **10% de los registros de la variable `y_total_m_ha`** presentan valores faltantes, lo que debe tenerse en cuenta en los análisis posteriores.
+
+```{r}
+# Revisamos valores faltantes:
+data_miss <- skim(data_filter) %>% select( skim_variable, n_missing)
+# Calculamnos número de observaciones para despues calcular el porcentaje de NA
+Obs <- nrow(data_filter) 
+#Porcentaje de observaciones faltantes
+data_miss<- data_miss %>% mutate(p_missing= n_missing/Obs)
+#Eliminar los que no tienen datos faltantes
+data_miss<- data_miss %>% filter(n_missing!= 0)
+
+# Revisar los datos faltantes gráficamente:
+ggplot(data_miss, aes(x = reorder(skim_variable, p_missing), y = p_missing)) +
+  geom_col(fill = "skyblue", color = "white", width = 0.7) +
+  coord_flip() +
+  geom_text(aes(label = scales::percent(p_missing, accuracy = 0.1)),
+            hjust = -0.1, size = 3) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Porcentaje de valores faltantes por variable",
+    x = "Variable",
+    y = "Porcentaje de NA"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5),
+    axis.text.y = element_text(size = 8)
+  )
+
+# EL 10% de los valores de la variable y_total_m_ha son faltantes
+```
+
+## Revisión de outliers (valores atípicos):
+
+En este bloque se evaluó la presencia de **valores atípicos** en la variable `ingreso_hora`.
+
+1.  **Cálculo de límites de referencia:**
+    -   Se definieron los percentiles 1% y 99% como puntos de corte.\
+    -   Los valores por debajo del percentil 1% (`low`) y por encima del percentil 99% (`up`) fueron considerados potenciales outliers.
+2.  **Visualización mediante boxplot:**
+    -   Se construyó un boxplot de la variable `ingreso_hora`.\
+    -   Se añadieron dos líneas horizontales punteadas en color azul que marcan los límites de outliers (`low` y `up`).\
+    -   Los valores atípicos fueron resaltados en color rojo dentro del gráfico.
+
+```{r}
+# Definimos límites inferior y superior de outliers usando percentiles
+low <- quantile(data_filter$ingreso_hora_1, 0.01, na.rm = TRUE)   # Percentil 1%
+up  <- quantile(data_filter$ingreso_hora_1, 0.99, na.rm = TRUE)   # Percentil 99%
+
+# Mostramos los valores de referencia
+low
+up
+
+# Creamos boxplot para visualizar distribución de ingreso por hora
+plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
+  geom_boxplot(fill = "skyblue", outlier.color = "red", outlier.size = 1) + # boxplot con outliers resaltados
+  geom_hline(yintercept = low, color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite inferior
+  labs(title = "Boxplot de salario horario con límites de outliers", y = "Ingreso por hora", x = "") +
+  theme_minimal()
+
+# Mostrar el gráfico
+print(plot_outlier)  
+
+
+```
+
+## Manipulación final de datos
+
+```{r}
+# Revisamos nuevamente la estructura de los datos
+str(data_filter)
+
+# Cambiamos a factor las variables que son categóricas
+data_filter <- data_filter %>%
+  mutate(
+    sex = as.factor(sex),
+    formal = as.factor(formal),
+    oficio = as.factor(oficio),
+    size_firm = as.factor(size_firm),
+    max_educ_level = as.factor(max_educ_level),
+    cuenta_propia = as.factor(cuenta_propia)
+  )
+
+# Manipulación de la variable ingreso por hora para reducción de peso de outliers
+data_filter <- data_filter %>%
+  filter(ingreso_hora_1> 0) %>%  # elimina ceros porque logaritmo no permite tener 0
+  mutate(log_ingreso_hora = log(ingreso_hora_1))
+
+```
+
+
+
+## 2.d.Estadísticas descriptivas de las variables
+
+```{r}
+names(data_filter) 
+
+library(dplyr)
+library(ggplot2)
+library(modelsummary)
+
+
+# Tabla descriptiva general
+# Seleccionar solo las variables deseadas
+vars <- data_filter[, c("ingreso_hora_1", "age", "hours_work_usual", "max_educ_level", "sex")]
+
+# Generar resumen
+datasummary_skim(vars, output = "gt", histogram = FALSE)
+
+# Tabla descriptiva por sexo
+datos <- data_filter %>%
+  mutate(sex_label = ifelse(sex == 0, "Mujer", "Hombre"))
+
+datasummary_balance(
+  ingreso_hora_1 + age + hours_work_usual + max_educ_level ~ sex_label,
+  data = datos,
+  fmt = 2
+)
+# Gráfico: densidad de ln(w) por sexo
+
+library(ggplot2)
+library(scales)  # Para formatear ejes si lo deseas
+
+ggplot(datos, aes(x = log(ingreso_hora_1), fill = sex_label)) +
+  geom_density(alpha = 0.6, size = 1.1, color = NA) +
+  scale_fill_manual(values = c("Mujer" = "#F8BBD0", "Hombre" = "#1E88E5")) +
+  labs(
+    title = "Distribución del logaritmo del salario horario por sexo",
+    subtitle = "Comparación entre hombres y mujeres",
+    x = "Logaritmo del ingreso por hora",
+    y = "Densidad",
+    fill = "Sexo"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12, margin = margin(b = 10)),
+    legend.position = "top",
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+
+```
+
+```{r}
+ggplot(data_filter, aes(x = max_educ_level, y = log(ingreso_hora_1))) +
+  geom_boxplot(fill = "#81D4FA") +
+  labs(
+    title = "Salario horario por nivel educativo",
+    subtitle = "Comparación entre trabajadores formales e informales",
+    x = "Nivel educativo",
+    y = "Logaritmo del ingreso por hora"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12, margin = margin(b = 10)),
+    legend.position = "top",
+    legend.title = element_text(face = "bold"),
+    axis.title = element_text(face = "bold")
+  )
+
+```
+
+```{r}
+library(dplyr)
+
+# Calcular proporciones
+porcentajes <- data_filter %>%
+  count(formal) %>%
+  mutate(
+    prop = n / sum(n),
+    label = paste0(round(prop * 100, 1), "%"),
+    formal = factor(formal, levels = c(0, 1), labels = c("No formal", "Formal"))
+  )
+
+# Gráfico
+ggplot(data_filter, aes(x = factor(formal, levels = c(0, 1), labels = c("No formal", "Formal")))) +
+  geom_bar(fill = "#4682B4", width = 0.6) +
+  geom_text(
+    data = porcentajes,
+    aes(x = formal, y = n, label = label),
+    vjust = -0.4,
+    color = "gray20"
+  ) +
+  labs(
+    title = "Distribución de la formalidad laboral",
+    subtitle = "Comparación entre trabajadores formales e informales",
+    x = "Condición laboral",
+    y = "Frecuencia"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12, margin = margin(b = 10)),
+    axis.title = element_text(face = "bold"),
+    axis.text = element_text(color = "gray20"),
+    panel.grid.minor = element_blank()
+  )
+
+```
+
+## 4.Brecha Salarial de género
+
+# 4.a Brecha incondicional
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + u
+$$
+
+```{r}
+library(broom)
+
+#tipo de valores
+summary(datos$ingreso_hora_1)
+any(is.na(datos$ingreso_hora_1))       # ¿Hay NA?
+any(is.nan(datos$ingreso_hora_1))      # ¿Hay NaN?
+any(is.infinite(datos$ingreso_hora_1)) # ¿Hay Inf?
+any(datos$ingreso_hora_1 <= 0)         # ¿Hay ceros o negativos?
+
+#Observaciones excluidas
+table(datos$ingreso_hora_1 == 0, useNA = "ifany")
+
+# Filtro de datos
+datos_lim <- datos %>%
+  filter(!is.na(ingreso_hora_1), ingreso_hora_1 > 0)
+
+wage_gap <- lm(log(ingreso_hora_1) ~ sex, data = datos_lim)
+
+#Visualización de tabla
+library(gt)
+
+tidy(wage_gap, conf.int = TRUE) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sex" = "Sexo (1 = hombres)")) %>%
+  gt() %>%
+  tab_header(
+    title = "Estimación de Brecha Salarial",
+    subtitle = "Modelo log-lineal sin controles"
+  ) %>%
+  fmt_number(columns = c(estimate, std.error, statistic, p.value, conf.low, conf.high), decimals = 2)
+
+
+# Interpretación en porcentaje
+gap_incond <- 100*(exp(coef(wage_gap)["sex"]) - 1)
+gap_incond
+
+```
+
+# 4.b Brecha condicional con controles
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + \theta X + u
+$$
+
+donde:
+
+$$
+\ w = salario
+$$
+
+
+$$
+\ text{sex} = variable \ binaria \ de \ sexo
+$$
+
+$$
+X = \{ \text{edad}, \text{edad}^2, \text{educación}, \text{oficio}, \text{formalidad}, \text{tamaño de empresa}, \text{horas} \}
+$$
+$$ 
+u = término \ de \ error \ aleatorio 
+$$
+```{r}
+# Filtro de datos
+gap_cond <- lm(log(ingreso_hora_1) ~ sex + age + I(age^2) + max_educ_level +
+               oficio + formal + size_firm + hours_work_usual, 
+             data = datos_lim)
+
+#Visualización de tabla
+tidy(gap_cond, conf.int = TRUE) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sex" = "Sexo (1 = hombres)")) %>%
+  gt() %>%
+  tab_header(
+    title = "Estimación de Brecha Condicional con Controles",
+    subtitle = "Modelo log-lineal con controles"
+  ) %>%
+  fmt_number(columns = c(estimate, std.error, statistic, p.value, conf.low, conf.high), decimals = 2)
+
+# Interpretación en porcentaje
+gap_cond <- 100*(exp(coef(gap_cond)["sex"]) - 1)
+gap_cond
+
+```
+# 4.b.i FWL (Frisch-Waugh-Lovell)
+
+```{r}
+# Paso 1: sex ~ X
+res_sex <- lm(sex ~ age + I(age^2) + max_educ_level +
+                 oficio + formal + size_firm + hours_work_usual, 
+              data = datos_lim)$residuals
+
+# Paso 2: ln(w) ~ X
+res_w <- lm(log(ingreso_hora_1) ~ age + I(age^2) + max_educ_level +
+               oficio + formal + size_firm + hours_work_usual, 
+            data = datos_lim)$residuals
+
+# Paso 3: residuales
+m_fwl <- lm(res_w ~ res_sex)
+summary(m_fwl)
+
+#Visualización de tabla
+tidy(m_fwl, conf.int = TRUE) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sex" = "Sexo (1 = hombres)")) %>%
+  gt() %>%
+  tab_header(
+    title = "Estimación de Brecha Condicional con Controles",
+    subtitle = "Modelo log-lineal con controles"
+  ) %>%
+  fmt_number(columns = c(estimate, std.error, statistic, p.value, conf.low, conf.high), decimals = 2)
+
+# Interpretación en porcentaje
+gap_fwl <- 100*(exp(coef(m_fwl)["res_sex"]) - 1)
+gap_fwl
+```
+
+# 4.b.ii FWL con bootstrap
+
+```{r}
+
+
+boot_fwl <- function(data, index){
+  d <- data[index, ]
+  r_sex <- lm(sex ~ age + I(age^2) + max_educ_level +
+                 oficio + formal + size_firm + hours_work_usual, 
+              data = d)$residuals
+  r_w   <- lm(log(ingreso_hora_1) ~ age + I(age^2) + max_educ_level +
+                 oficio + formal + size_firm + hours_work_usual, 
+              data = d)$residuals
+  coef(lm(r_w ~ r_sex))[2]
+}
+
+set.seed(123)
+boot_res <- boot(data = datos_lim, statistic = boot_fwl, R = 500)
+boot.ci(boot_res, type="perc")
+
+```
+
+#########
+#PUNTO 5
+
+Instalar librerias necesarias para predicción de Salario por hora según las variables seleccionadas.
+
+```{r}
+library(pacman)
+
+p_load(rio, # Import/export data.
+       tidyverse, # Tidy-data.
+       stargazer, # Descriptive statistics.
+       gt, # Descriptive statistics.
+       gtsummary,
+       caret, # For predictive model assessment.
+       gridExtra, # Arrange plots.
+       skimr # Summarize data. 
+)
+```
+
+Analisis de la tabla utilizada para verificar los modelos de prediccion de salario por hora
+
+```{r}
+head(datos_lim)
+names(datos_lim)
+
+```
+
+```{r}
+# Calculate the binwidth through Scott's rule.
+num_binwidth <- 3.5 * sd(datos_lim$ingreso_hora_1) / length(datos_lim$ingreso_hora_1)^(1/3)
+num_binwidth <- round(x = num_binwidth, digits = 2)
+
+a<- ggplot(datos_lim, aes(x = ingreso_hora_1 )) +
+  geom_histogram(mapping = aes(y = (after_stat(count))/sum(after_stat(count))), 
+                 color ="#FFFFFF", fill= "#3a5e8cFF", show.legend = FALSE, na.rm = TRUE, 
+                 binwidth = num_binwidth, linewidth = 0.2, alpha = 0.8, closed = 'left') +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), 
+                     labels = scales::label_number(scale = 100)) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, NA)) +
+  labs(x = "Ingreso Hora 1", y = "Percent (%)") +
+  theme_classic() 
+```
+
+```{r}
+num_binwidth <- 3.5 * sd(datos_lim$log_ingreso_hora) / length(datos_lim$log_ingreso_hora)^(1/3)
+num_binwidth <- round(x = num_binwidth, digits = 2)
+
+
+b <- ggplot(datos_lim, aes(x = log_ingreso_hora)) +
+  geom_histogram(mapping = aes(y = (after_stat(count))/sum(after_stat(count))), 
+                 color ="#FFFFFF", fill= "#3a5e8cFF", show.legend = FALSE, na.rm = TRUE, 
+                 binwidth = num_binwidth, linewidth = 0.2, alpha = 0.8, closed = 'left') +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), 
+                     labels = scales::label_number(scale = 100)) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, NA)) +
+  geom_vline(xintercept = median(datos_lim$log_ingreso_hora, na.rm = TRUE), color = 'green', linetype = 'dashed') +
+  geom_vline(xintercept = mean(datos_lim$log_ingreso_hora, na.rm = TRUE), color = 'red', linetype = 'dashed') +
+  labs(x = "Log Ingreso Por hora", y = "Percent (%)") +
+  theme_classic() 
+
+```
+
+Visualización de histogramas de salario por hora y logaritmo de salario por hora
+
+```{r}
+grid.arrange(a,b, nrow = 2)
+```
+como se observa en los histogramas anteriores la distribucion de ingreso por hora tiene muy marcada la cola a la derecha, por esta razon se elegirá el logaritmo del ingreso por hora.
+
+```{r}
+skim(datos_lim)
+
+```
+```{r}
+sapply(datos_lim, class)
+
+```
+```{r}
+colnames(datos_lim)
+```
+
+Punto 5.a.
+
+```{r}
+# CARET
+
+set.seed(10101)  # Set set for replicability purposes 
+
+
+inTrain <- createDataPartition(
+  y = datos_lim$log_ingreso_hora,  ## the outcome data are needed
+  p = .70, ## The percentage of training data
+  list = FALSE
+)
+training <- datos_lim |> filter(row_number() %in% inTrain)
+testing  <- datos_lim |> filter(!(row_number() %in% inTrain))
+
+# Create data for visualization
+split_data <- data.frame(
+  Split = factor(c("Training", "Testing")),
+  Count = c(nrow(training), nrow(testing)),
+  Percentage = c(nrow(training)/nrow(datos_lim)*100, nrow(testing)/nrow(datos_lim)*100)
+)
+
+# Create the visualization
+ggplot(split_data, aes(x = Split, y = Count)) +
+  geom_bar(stat = "identity", fill = "darkblue", width = 0.5) +
+  geom_text(aes(label = paste0(round(Percentage, 1), "%\n(n=", Count, ")")), 
+            vjust = -0.5, color = "black", size = 4) +
+  labs(title = "Train-Test Split Distribution",
+       y = "Number of Observations",
+       x = "") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) + # Add some space for labels
+  theme_classic()
+
+
+```
+
+Punto 5.b.
+
+Modelos anteriores:
+
+```{r}
+rm(form_1)
+```
+
+
+#MODEL 1
+
+
+```{r}
+form_1 <- log_ingreso_hora ~ age + I(age^2)
+modelo1a <- lm(form_1,
+               data = training)
+
+predictions <- predict(object = modelo1a, newdata = testing)
+score1a<- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score1a
+```
+
+#MODEL 2
+
+```{r}
+form_2 <- log_ingreso_hora ~ sex
+modelo2a <- lm(form_2,
+               data = training )
+
+predictions <- predict(object = modelo2a, newdata = testing)
+score2a<- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score2a
+```
+
+#MODEL 3
+```{r}
+form_3 <- log_ingreso_hora ~ sex + age + I(age^2) + max_educ_level +
+               oficio + formal + size_firm + hours_work_usual
+modelo3a <- lm(form_3,
+               data = training )
+predictions <- predict(object = modelo3a, newdata = testing)
+score3a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score3a
+
+```
+#MODEL 4
+```{r}
+form_4 <- log_ingreso_hora ~ sex * max_educ_level + age + I(age^2)
+modelo4a <- lm(form_4,
+               data = training )
+predictions <- predict(object = modelo4a, newdata = testing)
+score4a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score4a
+
+```
+#MODEL 5
+```{r}
+form_5 <- log_ingreso_hora ~ 
+modelo5a <- lm(form_5,
+               data = training )
+predictions <- predict(object = modelo5a, newdata = testing)
+score5a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score5a
+```
+
+#MODEL 6
+```{r}
+form_6 <- log_ingreso_hora ~ 
+modelo6a <- lm(form_6,
+               data = training )
+predictions <- predict(object = modelo6a, newdata = testing)
+score6a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score6a
+```
+
+#MODEL 7
+```{r}
+form_7 <- log_ingreso_hora ~ 
+modelo7a <- lm(form_7,
+               data = training )
+predictions <- predict(object = modelo7a, newdata = testing)
+score7a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score7a
+```
+
+#MODEL 8
+```{r}
+form_8 <- log_ingreso_hora ~ 
+modelo8a <- lm(form_8,
+               data = training )
+predictions <- predict(object = modelo8a, newdata = testing)
+score8a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score8a
+```
+
+
+```{r}
+ctrl <- trainControl(
+  method = "cv", # Method for resampling. It could be CV, repeated CV, LOOCV, and so on. 
+  number = 5) # Number of folds. 
+```
+
+#MODEL 1
+```{r}
+set.seed(10101)  
+modelo1b <- train(
+  form_1, # Define the functional form (i.e the variable to predict and the features).
+  data = datos_lim, 
+  method = 'lm', # Algorithm. In this case, linear model. 
+  trControl = ctrl
+)  
+modelo1b
+```
+```{r}
+modelo1b$resample
+```
+```{r}
+score1b<- mean(modelo1b$resample$RMSE)
+score1b
+```
+#MODEL 2
+```{r}
+set.seed(10101)  
+modelo2b <- train(form_2,
+                  data = datos_lim,
+                  method = 'lm',
+                  trControl= ctrl)
+modelo2b
+```
+```{r}
+score2b<- mean(modelo2b$resample$RMSE)
+score2b
+```
+#MODEL 3
+```{r}
+set.seed(10101)  
+modelo3b <- train(form_3,
+                  data = datos_lim,
+                  method = 'lm', 
+                  trControl = ctrl)
+modelo3b
+```
+```{r}
+colSums(is.na(datos_lim))
+```
+```{r}
+form_3
+```
+
+```{r}
+# Calcular la moda (nivel más frecuente)
+moda <- names(sort(table(datos_lim$max_educ_level), decreasing = TRUE))[1]
+
+# Reemplazar los NA por la moda
+datos_lim$max_educ_level <- as.character(datos_lim$max_educ_level)
+datos_lim$max_educ_level[is.na(datos_lim$max_educ_level)] <- moda
+datos_lim$max_educ_level <- as.factor(datos_lim$max_educ_level)
+
+```
+
+
+```{r}
+score3b<- mean(modelo3b$resample$RMSE)
+score3b
+```
+#MODEL 4
+```{r}
+set.seed(69205)  
+modelo4b <- train(form_4,
+                  data = datos_lim,
+                  method = 'lm', 
+                  trControl= ctrl)
+modelo4b
+```
+```{r}
+score4b<- mean(modelo4b$resample$RMSE)
+score4b
+```
+```{r}
+
+```
+
+```{r}
+## RUN THE MODEL WITH ALL OBS
+full_model <- lm(form_1,
+                  data = datos_lim)
+
+X <- model.matrix(full_model)
+y <- model.response(model.frame(full_model))
+
+beta_hat <- full_model$coefficients
+  
+## Calculate the inverse of  (X'X), call it G_inv
+G_inv <- solve(t(X)%*%X)
+
+## and 1/1-hi
+vec <- 1/(1-hatvalues(full_model))
+  
+N <- nrow(X)  # Number of observations
+LOO <- numeric(N)  # To store the errors
+
+# Loop over each observation
+for (i in 1:N) {
+  # get the new beta
+  new_beta<- beta_hat  - vec[i] * G_inv %*% as.vector(X[i, ]) * full_model$residuals[i]
+    ## get the new error
+    new_error<- (y[i]- (X[i, ] %*% new_beta))^2
+  LOO[i]<-  new_error
+}
+  
+looCV_error <- mean(LOO)
+sqrt(looCV_error)
+
+```
+
+
+
+
+```{r}
+## Store the RMSE in dataframe
+scores <- data.frame(Model= c(1, 2, 3, 4),
+                    RMSE_vsa= c(score1a, score2a, score3a, score4a), 
+                    RMSE_kfold= c(score1b, score2b, score3b, score4b)
+                    )
+
+head(scores)
+```
+
