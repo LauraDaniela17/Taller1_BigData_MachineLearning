@@ -167,19 +167,20 @@ tail(data_completa)
 
 ```{r}
 ## Filtrar observaciones inferiores a los 18 años de edad y no ocupados
-data_filter <- data_completa%>%
+data_filter_inicial <- data_completa %>%
   filter(age >= 18)%>%filter(ocu==1)
 
 # Revisamos nuevamente la cantidad de observaciones
-cat("El dataset filtrado contiene", nrow(data_filter), "filas y", ncol(data_filter), "columnas.\n")
+cat("El dataset filtrado contiene", nrow(data_filter_inicial), "filas y", ncol(data_filter_inicial), "columnas.\n")
 
 ```
 
-## elección de variables
+## Selección de variables
 
 En este bloque se depura la base de datos filtrada (`data_filter`) para trabajar únicamente con las variables relevantes y se crea la variable de interés
 
-Se conservan únicamente las siguientes columnas de interés: - `directorio`, `secuencia_p`, `orden`: variables de identificación del individuo.
+Se conservan únicamente las siguientes 12 variables de interés:
+- `directorio`, `secuencia_p`, `orden`: variables de identificación del individuo.
 - `sex`: sexo.
 - `age`: edad.
 - `relab``: tipo de ocupacion.
@@ -189,6 +190,29 @@ Se conservan únicamente las siguientes columnas de interés: - `directorio`, `s
 - `max_educ_level`: máximo nivel educativo alcanzado.
 - `impa`: Ingreso monetario primera actividad antes de imputación.
 - `hours_work_usual`: horas trabajadas usualmente por semana.
+
+Creamos la variable dependiente de la siguiente manera: - **Númerador**: `impa` - **Denominador**: `hours_work_usual` \* 4.33 - Donde `4.33` corresponde al promedio de semanas en un mes (52 semanas / 12 meses).
+
+```{r}
+# Se seleccionan de data_filter_inicial las variables independiente seleccionadas para el análisis
+
+data_filter <- data_filter_inicial %>% 
+  select(directorio, secuencia_p, orden,sex, age, relab, mes, formal,
+         size_firm, max_educ_level, impa, hours_work_usual)
+
+#Creación variable dependiente
+
+data_filter <- data_filter %>%
+  mutate(ingreso_hora_1 = (impa/(hours_work_usual*4.33)))
+
+# Revisión nuevamente la cantidad de observaciones
+cat("El dataset con las variables seleccionadas para el análisis contiene", nrow(data_filter), "filas y", ncol(data_filter), "columnas.\n")
+
+
+```
+
+
+
 
 ```{r}
 levels <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/labels.html"
@@ -201,18 +225,6 @@ cat("El diccionario de niveles y etiquetas contiene", nrow(data_levels), "filas 
 ```
 
 
-Creamos la variable dependiente de la siguiente manera: - **Númerador**: `impa` - **Denominador**: `hours_work_usual` \* 4.33 - Donde `4.33` corresponde al promedio de semanas en un mes (52 semanas / 12 meses).
-
-```{r}
-# Con el nombre de las variables ya revisadas y 
-data_filter<- data_filter%>% select(directorio, secuencia_p, orden,sex, age, relab, mes,
-                                        formal, size_firm, max_educ_level, impa, hours_work_usual, fex_c)
-
-#Creación variable dependiente
-data_filter<- data_filter%>%
-  mutate(ingreso_hora_1 = (impa/(hours_work_usual*4.33)))
-
-```
 
 ## Revisión inicial de los datos
 
