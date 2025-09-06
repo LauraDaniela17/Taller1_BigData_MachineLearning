@@ -190,6 +190,17 @@ Se conservan únicamente las siguientes columnas de interés: - `directorio`, `s
 - `impa`: Ingreso monetario primera actividad antes de imputación.
 - `hours_work_usual`: horas trabajadas usualmente por semana.
 
+```{r}
+levels <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/labels.html"
+
+data_levels <- funcion_para_leer_tablas(levels)
+head(data_levels)
+
+cat("El diccionario de niveles y etiquetas contiene", nrow(data_levels), "filas y", ncol(data_levels), "columnas.\n")
+
+```
+
+
 Creamos la variable dependiente de la siguiente manera: - **Númerador**: `impa` - **Denominador**: `hours_work_usual` \* 4.33 - Donde `4.33` corresponde al promedio de semanas en un mes (52 semanas / 12 meses).
 
 ```{r}
