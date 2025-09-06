@@ -79,7 +79,8 @@ pacman::p_load(rvest, #Web scrapping
                scales,  # Para formatear ejes
                gt, #Mejores tablas
                broom,  
-               corrplot) #Matrices de correlación
+               corrplot, #Matrices de correlación
+               survey) #Manejo de encuestas complejas
 
 ```
 
@@ -509,6 +510,32 @@ ggplot(data_filter, aes(x = factor(formal, levels = c(0, 1), labels = c("No form
     axis.text = element_text(color = "gray20"),
     panel.grid.minor = element_blank()
   )
+
+```
+
+## 3. Perfil edad-salario
+
+```{r}
+
+datos_lim <- datos_lim %>%
+  mutate(age2 = age^2)
+
+diseno <- svydesign(ids = ~1, weights = ~fex_c, data = datos_lim)
+
+age_wage_reg_pond <- svyglm(log_ingreso_hora ~ age + age2, design = diseno)
+summary(age_wage_reg_pond)
+
+msummary(
+  list("Perfil edad–salario (ponderado)" = age_wage_reg),
+  stars = c('*' = .10, '**' = .05, '***' = .01),
+  statistic = "({std.error})",
+  coef_map = c("(Intercept)" = "Constante",
+               "age" = "Edad",
+               "age2" = "Edad^2"),
+  gof_omit = "AIC|BIC|Log.Lik",
+  notes = "Errores estándar robustos por diseño de encuesta. Ponderación: fex_c.",
+  output = "tabla_regresion_ponderada.tex"
+)
 
 ```
 
