@@ -81,7 +81,10 @@ pacman::p_load(rvest, #Web scrapping
                gt, #Mejores tablas
                broom,  
                corrplot, #Matrices de correlación
-               survey) #Manejo de encuestas complejas
+               survey, #Manejo de encuestas complejas
+               ggplot2, #Gráficas
+               kableExtra #Exportar tablas a Latex
+               ) 
 
 pacman::p_loaded()
 ```
@@ -114,12 +117,12 @@ github.io/GEIH2018 sample/ , los cuales se encuentran distribuidos e 10 paginaci
 
 ```{r cars}
 
-# Generación de URL: contiene un vector de 10 paginaciones
+# Generamos URL: contiene un vector de 10 paginaciones
 urls <- paste0("https://ignaciomsarmiento.github.io/GEIH2018_sample/pages/geih_page_", 1:10, ".html")
 
 funcion_para_leer_tablas <- function(a) {
   pagina <- read_html(a)  #Leer el html
-  tabla_html <- html_elements(pagina, "table")[[1]] #Extrae la primera página
+  tabla_html <- html_elements(pagina, "table")[[1]] #Estrae la primera página
   data <- html_table(tabla_html, trim = TRUE)  #Convertir el html a data frame
   data <- data %>% clean_names() %>% type_convert() #Limpiar nombres y cambiar tipos de datos
   return(data)
@@ -224,7 +227,6 @@ En esta sección se realizó una exploración preliminar de la base de datos con
     -   De esta manera se buscó identificar casos de panel (individuos observados más de una vez) y diferenciarlos de observaciones transversales (solo un mes).
 
 ```{r}
-
 # Análisis a nivel individuo:
 
 # Revisamos cantidad de meses que hay en la base:
@@ -233,12 +235,11 @@ n_meses <- data_filter %>%
   pull(total_meses)  #12 meses
 
 # Creamos el ID único para cada persona según la documentación de la GEIH
-data_filter<- data_filter%>%
+data_filter <- data_filter %>%
   mutate(id_individuo = paste(directorio, secuencia_p, orden, sep = "_"))
 
-
 # Quitar duplicados a nivel individuo-mes
-df_unicos <- data_filter%>%
+df_unicos <- data_filter %>%
   distinct(id_individuo, mes)
 
 # Contar en cuántos meses aparece cada individuo
@@ -281,19 +282,21 @@ En este bloque de código se realiza un análisis exploratorio de los valores fa
         -   Etiquetas con el porcentaje exacto sobre cada barra.
 
 ```{r}
-
 # Revisamos valores faltantes:
 data_miss <- skim(data_filter) %>% select( skim_variable, n_missing)
-# Calculamnos número de observaciones para despues calcular el porcentaje de NA
+
+# Calculamos número de observaciones para despues calcular el porcentaje de NA
 Obs <- nrow(data_filter) 
-Obs #32.177 observaciones
+Obs #16.545 observaciones
+
 #Porcentaje de observaciones faltantes
 data_miss<- data_miss %>% mutate(p_missing= n_missing/Obs)
+
 #Eliminar los que no tienen datos faltantes
 data_miss<- data_miss %>% filter(n_missing!= 0)
+View(data_miss)
 
 # Revisar los datos faltantes gráficamente:
-
 ggplot(data_miss, aes(x = reorder(skim_variable, +p_missing) , y =  p_missing)) +
   geom_bar(stat = "identity", fill = "skyblue", color = "black") +
   coord_flip() +
@@ -348,7 +351,7 @@ up  <- quantile(data_filter$ingreso_hora_1, 0.99, na.rm = TRUE)   # Percentil 99
 low
 up
 
-# Creamos boxplot para visualizar distribución de ingreso por hora (en log)
+# Crear boxplot para visualizar distribución de ingreso por hora (en log)
 plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
   geom_boxplot(fill = "skyblue", outlier.color = "red", outlier.size = 1) + # boxplot con outliers resaltados
   geom_hline(yintercept = low, color = "blue", linetype = "dashed", linewidth = 0.7) + # línea límite inferior
@@ -363,8 +366,6 @@ plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
 # Mostrar el gráfico
 print(plot_outlier)
 ```
-
-
 ## Manipulación final de datos
 
 En esta etapa se realizaron dos procesos fundamentales:
@@ -373,14 +374,16 @@ En esta etapa se realizaron dos procesos fundamentales:
     Se identificaron aquellas variables que originalmente estaban codificadas con números enteros pero que representan categorías. Estas fueron convertidas a factores y se les asignaron etiquetas descriptivas para facilitar su interpretación.
     -   `sex` → `sexo`: recodificada como **Mujer** y **Hombre**.\
     -   `formal`: clasificada en **Informal** y **Formal**.
-    -   `oficio`: transformada en factor.
+    -   `Relab`: transformada en factor.
     -   `size_firm`: recodificada en categorías que representan el **tamaño de la empresa** (auto-empleado, 2–5 empleados, 6–10 empleados, 11–15 empleados y más de 50).\
     -   `max_educ_level`: recodificada a niveles educativos alcanzados (ninguno, preescolar, primaria, secundaria, terciaria, N/A).\
-    -   `cuenta_propia`: categorizada en **Cuenta propia** y **No cuenta propia**.
+    
 2.  **Tratamiento de la variable de ingresos:**
     -   Se eliminan las observaciones con **ingreso por hora igual a cero**, dado que no son válidas para el análisis de logaritmos y, además, podrían distorsionar la interpretación del salario.\
     -   Se crea la nueva variable `log_ingreso_hora`, que corresponde al **logaritmo natural del ingreso por hora**. Esta transformación ayuda a reducir la influencia de valores atípicos (outliers) y aproxima la distribución de la variable a una forma más cercana a la normalidad.
 
+
+Previamente se revisan los niveles y etiquetas para clasificar las variables categoricas.
 
 ```{r}
 #Revisar los niveles y etiquetas de las variables categoricas
@@ -392,7 +395,6 @@ head(data_levels)
 cat("El diccionario de niveles y etiquetas contiene", nrow(data_levels), "filas y", ncol(data_levels), "columnas.\n")
 
 ```
-
 
 
 ```{r}
@@ -435,7 +437,15 @@ data_filter <- data_filter %>%
 data_filter <- data_filter %>%
   filter(ingreso_hora_1> 0) %>%  # elimina ceros porque logaritmo no permite tener 0
   mutate(log_ingreso_hora = log(ingreso_hora_1))
+
+colnames(data_filter)
+
 ```
+```{r}
+colSums(is.na(data_filter))
+```
+
+
 
 ## Estadísticas descriptivas de las variables
 
@@ -449,38 +459,17 @@ vars <- data_filter[, c("ingreso_hora_1", "age", "hours_work_usual", "max_educ_l
 datasummary_skim(vars, output = "gt", histogram = FALSE)
 
 
-
 datasummary_balance(
   ingreso_hora_1 + age + hours_work_usual + max_educ_level ~ sex_label,
   data = data_filter,
   fmt = 2
 )
-# Gráfico: densidad de ln(w) por sexo
-
-datos_lim <- data_filter[!is.na(data_filter$log_ingreso_hora), ]
-
-ggplot(datos_lim, aes(x = log_ingreso_hora, fill = sex_label)) +
-  geom_density(alpha = 0.6, size = 1.1, color = NA) +
-  scale_fill_manual(values = c("Mujer" = "#F8BBD0", "Hombre" = "#1E88E5")) +
-  labs(
-    title = "Distribución del logaritmo del salario horario por sexo",
-    subtitle = "Comparación entre hombres y mujeres",
-    x = "Logaritmo del ingreso por hora",
-    y = "Densidad",
-    fill = "Sexo"
-  ) +
-  theme_minimal(base_size = 13) +
-  theme(
-    plot.title = element_text(face = "bold", size = 16),
-    plot.subtitle = element_text(size = 12, margin = margin(b = 10)),
-    legend.position = "top",
-    legend.title = element_text(face = "bold"),
-    axis.title = element_text(face = "bold")
-  )
-
-
-
 ```
+
+```{r}
+datos_lim <- data_filter[!is.na(data_filter$log_ingreso_hora), ]
+```
+
 
 ```{r}
 ggplot(datos_lim, aes(x = max_educ_level, y = log_ingreso_hora)) +
@@ -538,6 +527,11 @@ ggplot(data_filter, aes(x = factor(formal, levels = c(0, 1), labels = c("No form
   )
 
 ```
+
+
+
+
+
 
 ## 3. Perfil edad-salario
 
