@@ -44,7 +44,7 @@ El primer bloque de código se utiliza para preparar el entorno de trabajo antes
 
 ```{r setup, include=FALSE}
 
-# Configuración de knitr y carga de paquetes para análisis, limpieza y manipulación de datos
+# Configuración de knitr
 
 knitr::opts_chunk$set(
 	echo = TRUE,
@@ -60,6 +60,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r}
+# Carga de paquetes para análisis, limpieza y manipulación de datos
 # Instalar y cargar pacman (gestor de paquetes) y otras librerías para análisis de datos
 
 if (!require("pacman")) install.packages("pacman")
@@ -145,7 +146,8 @@ cat("El diccionario de variables contiene", nrow(data_diccionario), "filas y", n
 
 ## Revisión inicial de los datos
 
-Revisión incial de la estructuración de los datos; cantidad de observaciones, tipos de datos, nombre de variables, identificación de valores faltantes (NA).
+Revisión inicial de la estructuración de los datos; cantidad de observaciones, tipos de datos, nombre de variables, identificación de valores faltantes (NA).
+
 
 ```{r}
 
