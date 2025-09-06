@@ -589,6 +589,8 @@ kbl(tabla_peak, format = "latex", booktabs = TRUE,
 
 ```
 
+Inicio Z
+
 ## 4.Brecha Salarial de género
 
 # 4.a Brecha incondicional
@@ -605,7 +607,8 @@ wage_gap <- lm(log_ingreso_hora ~ sex_label, data = datos_lim)
 #Visualización de tabla
 
 tidy(wage_gap, conf.int = TRUE) %>%
-  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sexo" = "Sexo (1 = hombres)")) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto", 
+                       "sex_labelHombre" = "Sexo (1 = Hombre)")) %>%
   gt() %>%
   tab_header(
     title = "Estimación de Brecha Salarial",
@@ -613,10 +616,6 @@ tidy(wage_gap, conf.int = TRUE) %>%
   ) %>%
   fmt_number(columns = c(estimate, std.error, statistic, p.value, conf.low, conf.high), decimals = 2)
 
-
-# Interpretación en porcentaje
-gap_incond <- 100*(exp(coef(wage_gap)["sex_label"]) - 1)
-gap_incond
 
 
 ```
@@ -641,7 +640,28 @@ gap_cond <- lm(log_ingreso_hora~ sex_label + age + I(age^2) + max_educ_level +
              data = datos_lim)
 #Visualización de tabla
 tidy(gap_cond, conf.int = TRUE) %>%
-  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sexo" = "Sexo (1 = hombres)")) %>%
+  mutate(term = recode(term, 
+    "(Intercept)" = "Intercepto",
+    "sex_labelHombre" = "Sexo (1 = Hombre)",
+    "age" = "Edad",
+    "I(age^2)" = "Edad²",
+    "max_educ_levelPrimaria imcompleta" = "Primaria incompleta",
+    "max_educ_levelPrimaria completa" = "Primaria completa",
+    "max_educ_levelSecundaria incompleta" = "Secundaria incompleta",
+    "max_educ_levelSecundaria completa" = "Secundaria completa",
+    "max_educ_levelTerciaria" = "Terciaria",
+    "relabEmpleado del gobierno" = "Empleado público",
+    "relabEmpleado domestico" = "Empleado doméstico",
+    "relabCuenta propia" = "Cuenta propia",
+    "relabEmpleador" = "Empleador",
+    "relabJornalero" = "Jornalero",
+    "relabOtro" = "Otro tipo de relación laboral",
+    "formalFormal" = "Formalidad laboral",
+    "size_firm2-5 empleados" = "Empresa: 2–5 empleados",
+    "size_firm6-510 empleados" = "Empresa: 6–10 empleados",
+    "size_firm11-15 empleados" = "Empresa: 11–15 empleados",
+    "size_firmMás de 50" = "Empresa: más de 50 empleados"
+)) %>%
   gt() %>%
   tab_header(
     title = "Estimación de Brecha Condicional con Controles",
@@ -649,9 +669,6 @@ tidy(gap_cond, conf.int = TRUE) %>%
   ) %>%
   fmt_number(columns = c(estimate, std.error, statistic, p.value, conf.low, conf.high), decimals = 2)
 
-# Interpretación en porcentaje
-gap_cond <- 100*(exp(coef(gap_cond)["sex_label"]) - 1)
-gap_cond
 
 ```
 
@@ -674,7 +691,7 @@ summary(m_fwl)
 
 #Visualización de tabla
 tidy(m_fwl, conf.int = TRUE) %>%
-  mutate(term = recode(term, "(Intercept)" = "Intercepto", "sex" = "Sexo (1 = hombres)")) %>%
+  mutate(term = recode(term, "(Intercept)" = "Intercepto")) %>%
   gt() %>%
   tab_header(
     title = "Estimación de Brecha Condicional con Controles",
@@ -705,8 +722,8 @@ boot_fwl <- function(data, index){
   coef(lm(r_w ~ r_sex))[2]
 }
  
-set.seed(123)
-boot_res <- boot(data = datos_lim, statistic = boot_fwl, R = 500)
+set.seed(10101)
+boot_res <- boot(data = datos_lim, statistic = boot_fwl, R = 1000)
 boot.ci(boot_res, type="perc")
 
 # Estimador FWL clásico
@@ -723,7 +740,5 @@ results <- data.frame(
   SE = c(se_fwl, se_boot)
 )
 results
-
 ```
-
-
+Fin Z 
