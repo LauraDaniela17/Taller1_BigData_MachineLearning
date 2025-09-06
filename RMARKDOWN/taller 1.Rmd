@@ -126,6 +126,8 @@ funcion_para_leer_tablas <- function(a) {
 
 data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior para todas las 10 paginaciones 
 
+cat("El dataset de la GEIH descargado de la página https://ignaciomsarmiento.github.io/GEIH2018_sample/  contiene", nrow(data_completa), "filas y", ncol(data_completa), "columnas.\n")
+
 ```
 
 #Diccionario de datos !!!!!!!!!!!!!!!!!!
@@ -133,7 +135,10 @@ data_completa <- map_dfr(urls, funcion_para_leer_tablas) #Aplica lo anterior par
 urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 
 data_diccionario <- funcion_para_leer_tablas(urls2)
-View(data_diccionario)
+head(data_diccionario)
+
+cat("El diccionario de variables contiene", nrow(data_diccionario), "filas y", ncol(data_diccionario), "columnas.\n")
+
 
 ```
 
