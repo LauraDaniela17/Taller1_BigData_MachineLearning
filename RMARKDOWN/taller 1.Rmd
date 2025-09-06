@@ -82,6 +82,7 @@ pacman::p_load(rvest, #Web scrapping
                corrplot, #Matrices de correlación
                survey) #Manejo de encuestas complejas
 
+pacman::p_loaded()
 ```
 
 
