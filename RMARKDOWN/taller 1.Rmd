@@ -207,24 +207,7 @@ data_filter <- data_filter %>%
 
 # Revisión nuevamente la cantidad de observaciones
 cat("El dataset con las variables seleccionadas para el análisis contiene", nrow(data_filter), "filas y", ncol(data_filter), "columnas.\n")
-
-
 ```
-
-
-
-
-```{r}
-levels <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/labels.html"
-
-data_levels <- funcion_para_leer_tablas(levels)
-head(data_levels)
-
-cat("El diccionario de niveles y etiquetas contiene", nrow(data_levels), "filas y", ncol(data_levels), "columnas.\n")
-
-```
-
-
 
 ## Revisión inicial de los datos
 
@@ -244,7 +227,7 @@ En esta sección se realizó una exploración preliminar de la base de datos con
 
 # Análisis a nivel individuo:
 
-#Revisamos cantidad de meses que hay en la base:
+# Revisamos cantidad de meses que hay en la base:
 n_meses <- data_filter %>%
   summarise(total_meses = n_distinct(mes)) %>%
   pull(total_meses)  #12 meses
@@ -398,6 +381,20 @@ En esta etapa se realizaron dos procesos fundamentales:
     -   Se eliminan las observaciones con **ingreso por hora igual a cero**, dado que no son válidas para el análisis de logaritmos y, además, podrían distorsionar la interpretación del salario.\
     -   Se crea la nueva variable `log_ingreso_hora`, que corresponde al **logaritmo natural del ingreso por hora**. Esta transformación ayuda a reducir la influencia de valores atípicos (outliers) y aproxima la distribución de la variable a una forma más cercana a la normalidad.
 
+
+```{r}
+#Revisar los niveles y etiquetas de las variables categoricas
+levels <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/labels.html"
+
+data_levels <- funcion_para_leer_tablas(levels)
+head(data_levels)
+
+cat("El diccionario de niveles y etiquetas contiene", nrow(data_levels), "filas y", ncol(data_levels), "columnas.\n")
+
+```
+
+
+
 ```{r}
 # Revisamos nuevamente la estructura de los datos
 str(data_filter)
@@ -430,9 +427,8 @@ data_filter <- data_filter %>%
                                   "11-15 empleados", 
                                   "Más de 50")),
     max_educ_level = factor(max_educ_level,
-                            levels = c(1, 2, 3, 4, 5, 6, 7,9),
-                            labels = c("Ninguno", "Preescolar", "Primaria imcompleta", 
-                                       "Primaria completa", "Secundaria incompleta", "Secundaria completa", "Terceiaria", "N/A")),
+                            levels = c(1, 2, 3, 4, 5, 6, 7, 9),
+                            labels = c("Ninguno", "Preescolar", "Primaria imcompleta", "Primaria completa", "Secundaria incompleta", "Secundaria completa", "Terciaria", "N/A")),
   )
 
 # Manipulación de la variable ingreso por hora para reducción de peso de outliers
