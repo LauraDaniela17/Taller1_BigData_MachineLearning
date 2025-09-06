@@ -159,17 +159,17 @@ head(data_completa)
 # tail para ver las ultimas   
 tail(data_completa)
  
+# Una vez encontradas las variables de interés para la selección de la muestra, las cuales son age y ocu, procedemos a filtrar data_completa
 
+```
 
-# Una vez encontrada las variables de interés para la selección de la muestra, 
-# las cuales son age y ocu, procedemos a filtrar data_completa
-
-## Filtramos observaciones inferiores a los 18 años de edad y no ocupados
+```{r}
+## Filtrar observaciones inferiores a los 18 años de edad y no ocupados
 data_filter <- data_completa%>%
   filter(age >= 18)%>%filter(ocu==1)
 
 # Revisamos nuevamente la cantidad de observaciones
-nrow(data_filter) #16.542 observaciones
+cat("El dataset filtrado contiene", nrow(data_filter), "filas y", ncol(data_filter), "columnas.\n")
 
 ```
 
@@ -187,7 +187,6 @@ Se conservan únicamente las siguientes columnas de interés: - `directorio`, `s
 - `max_educ_level`: máximo nivel educativo alcanzado.
 - `impa`: Ingreso monetario primera actividad antes de imputación.
 - `hours_work_usual`: horas trabajadas usualmente por semana.
-- `fex_c`: Factor expansión.
 
 Creamos la variable dependiente de la siguiente manera: - **Númerador**: `impa` - **Denominador**: `hours_work_usual` \* 4.33 - Donde `4.33` corresponde al promedio de semanas en un mes (52 semanas / 12 meses).
 
