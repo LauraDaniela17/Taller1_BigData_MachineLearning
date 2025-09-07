@@ -444,8 +444,29 @@ colnames(data_filter)
 ```{r}
 colSums(is.na(data_filter))
 ```
+Imputar el valor faltante de Maximo nivel de educacion
+```{r}
+# Calcular la moda en la variable max_educ_level
+moda <- names(sort(table(data_filter$max_educ_level), decreasing = TRUE))[1]
+
+# Reemplazar los NA por la moda
+data_filter$max_educ_level[is.na(data_filter$max_educ_level)] <- moda
+data_filter$max_educ_level <- as.factor(data_filter$max_educ_level)
+
+#Se eliminó el valor faltante en la variable
+colSums(is.na(data_filter))
 
 
+```
+```{r}
+str(data_filter)
+```
+
+Renombrar dataset final para analisis de los modelos de los puntos posteriores.
+
+```{r}
+datos_lim <- data_filter
+```
 
 ## Estadísticas descriptivas de las variables
 
@@ -466,9 +487,6 @@ datasummary_balance(
 )
 ```
 
-```{r}
-datos_lim <- data_filter[!is.na(data_filter$log_ingreso_hora), ]
-```
 
 
 ```{r}
@@ -527,8 +545,6 @@ ggplot(data_filter, aes(x = factor(formal, levels = c(0, 1), labels = c("No form
   )
 
 ```
-
-
 
 
 
