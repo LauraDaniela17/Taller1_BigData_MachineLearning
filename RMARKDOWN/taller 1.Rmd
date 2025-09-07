@@ -966,7 +966,7 @@ cat("El RMSE del Modelo 5 es:", round(score5a, 4), "\n")
 
 ```
 
-#### 6 VSA - MODELO 6
+ - VSA - MODELO 6
 
 ```{r}
 
@@ -993,7 +993,7 @@ cat("El RMSE del Modelo 7 es:", round(score7a, 4), "\n")
 
 
 
-### 8 - VSA - MODELO 8
+ - VSA - MODELO 8
 ```{r}
 form_8 <- log_ingreso_hora ~ max_educ_level * relab + age
 modelo8a <- lm(form_8,
@@ -1016,9 +1016,9 @@ tabla_rmse <- data.frame(
     "Sexo + Edad + Edad² + Educación + Tipo Ocupación + Formal + Tamaño empresa",
     "Sexo * Edad + Edad² + Educación",
     "Sexo * Educación + Edad",
-    "Sexo + Tipo Ocupación + Formal + Tamaño empresa",
+    "Edad + Tipo Ocupación",
     "Edad + Educación * Formal",
-    "Educación * Tipo Ocupación + Formal + Edad + Sexo"
+    "Educación * Tipo Ocupación + Edad"
   ),
   RMSE = round(c(score1a, score2a, score3a, score4a, score5a, score6a, score7a, score8a), 4),
   stringsAsFactors = FALSE
@@ -1027,29 +1027,6 @@ tabla_rmse <- data.frame(
 # Ver tabla
 print(tabla_rmse)
 
-
-```
-```{r}
-library(officer)
-library(flextable)
-
-# Convertir a flextable
-tabla_flex <- flextable(tabla_rmse)
-
-# Opcional: ajustar estilo
-tabla_flex <- tabla_flex |> 
-  autofit() |> 
-  align(align = "center", part = "all") |> 
-  bold(part = "header") |> 
-  set_table_properties(width = .95, layout = "autofit")
-
-# Crear documento Word
-doc <- read_docx() |> 
-  body_add_par("Resumen de Modelos Predictivos con RMSE", style = "heading 1") |> 
-  body_add_flextable(tabla_flex)
-
-# Guardar
-print(doc, target = "Resumen_Modelos_RMSE.docx")
 
 ```
 
@@ -1132,7 +1109,7 @@ cat("El RMSE del Modelo 5 es:", round(score5b, 4), "\n")
 ```
 
 
-### k6 - K-FOLD MODELO 6
+ - K-FOLD MODELO 6
 ```{r}
 set.seed(10101)  
 modelo6b <- train(form_6,
@@ -1162,7 +1139,7 @@ cat("El RMSE del Modelo 7 es:", round(score7b, 4), "\n")
 
 
 
-### 8 - K-FOLD MODELO 8
+ - K-FOLD MODELO 8
 ```{r}
 set.seed(10101)  
 modelo8b <- train(form_8,
@@ -1175,6 +1152,8 @@ score8b<- mean(modelo8b$resample$RMSE)
 cat("El RMSE del Modelo 8 es:", round(score8b, 4), "\n")
 
 ```
+
+
 ## 5.c Resultados de los modelos
 
 ```{r}
@@ -1192,44 +1171,10 @@ scores
 
 ## 5.d LOOCV
 
-```{r}
-## RUN THE MODEL WITH ALL OBS
-
-full_model <- lm(form_3,
-                  data = datos_lim )
-
-X <- model.matrix(full_model)
-y <- model.response(model.frame(full_model))
-
-beta_hat <- full_model$coefficients
-  
-## Calculate the inverse of  (X'X), call it G_inv
-G_inv <- solve(t(X)%*%X)
-
-## and 1/1-hi
-vec<- 1/(1-hatvalues(full_model))
-  
-N <- nrow(X)  # Number of observations
-LOO <- numeric(N)  # To store the errors
-
-  # Loop over each observation
-for (i in 1:N) {
-  # get the new beta
-  new_beta<- beta_hat  - vec[i] * G_inv %*% as.vector(X[i, ]) * full_model$residuals[i]
-    ## get the new error
-    new_error<- (y[i]- (X[i, ] %*% new_beta))^2
-  LOO[i]<-  new_error
-}
-  
-looCV_error <- mean(LOO)
-sqrt(looCV_error)
-
-```
+De acuerdo con los resultados de RMSE de Validation Set Approach y K-Fold se eligen los modelos 3 y 7, con el objetivo de verificar los resultados de RMSE por el método de LOOCV
 
 ```{r}
-# ===========================
 # LOOCV específico para Modelo 3
-# ===========================
 
 # Ajustar modelo completo con todos los datos
 modelo3_full <- lm(form_3, data = datos_lim)
@@ -1241,7 +1186,7 @@ y3 <- model.response(model.frame(modelo3_full))
 # Estimador de coeficientes (beta_hat)
 beta_hat3 <- modelo3_full$coefficients
 
-# Inversa de (X'X) — ¡puede dar error si hay colinealidad perfecta!
+# Inversa de (X'X) 
 G_inv3 <- solve(t(X3) %*% X3)
 
 # Valores de leverage (h_ii)
@@ -1273,9 +1218,7 @@ cat("RMSE LOOCV del Modelo 3:", round(rmse_loocv3, 4), "\n")
 ```
 
 ```{r}
-# ===========================
 # LOOCV específico para Modelo 7
-# ===========================
 
 # Ajustar modelo completo con todos los datos
 modelo7_full <- lm(form_7, data = datos_lim)
@@ -1316,5 +1259,15 @@ rmse_loocv7 <- sqrt(error_promedio7)
 # Imprimir resultado
 cat("RMSE LOOCV del Modelo 7:", round(rmse_loocv7, 4), "\n")
 
+```
+```{r}
+## Store the RMSE in dataframe
+ResultadosRMSE<- data.frame( Modelo = c(1, 2),
+                    RMSE_vsa1= c(score3a, score7a), 
+                    RMSE_kfold1= c(score3b, score7b),
+                    RMSE_loocv1= c(rmse_loocv3, rmse_loocv7)
+                    )
+
+ResultadosRMSE
 ```
 
