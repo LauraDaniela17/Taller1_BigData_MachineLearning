@@ -84,7 +84,14 @@ pacman::p_load(rvest, #Web scrapping
                survey, #Manejo de encuestas complejas
                ggplot2, #Gráficas
                kableExtra, #Exportar tablas a Latex
-               knitr) 
+               knitr,
+               rio, #importar y exportar datos
+               stargazer, # Estadísticas descriptivas
+               gt, # Estadísticas descriptivas
+               gtsummary,
+               caret, # For predictive model assessment.
+               gridExtra # Arrange plots.
+               ) 
 
 pacman::p_loaded()
 ```
@@ -634,8 +641,6 @@ $$
 $$
 
 ```{r}
-
-
 wage_gap <- lm(log_ingreso_hora ~ sex_label, data = datos_lim)
 
 #Visualización de tabla
@@ -776,3 +781,8 @@ results <- data.frame(
 results
 ```
 Fin Z 
+
+
+
+
+
