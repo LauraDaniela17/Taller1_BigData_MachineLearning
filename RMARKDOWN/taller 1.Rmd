@@ -10,7 +10,7 @@ editor_options:
 ---
 
 
-# 1 Introducción
+# 1. Introducción
 
 La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos.
 Entender estos factores de edad, los estudios, el tiempo trabajado, la ocupación y el género en los ingresos permite no solo explicar las desigualdades en el mercado laboral, sino también buscar formas más justas y eficientes en la asignación de recursos.
@@ -98,7 +98,7 @@ pacman::p_loaded()
 
 
 
-## Web scraping
+##Web scraping
 
 
 En este bloque se realiza la **extracción automática de los datos** de la Gran Encuesta Integrada de Hogares (GEIH) 2018 para Bogotá, disponible en el sitio web del profesor Ignacio Sarmiento:
@@ -141,7 +141,7 @@ cat("El dataset de la GEIH descargado de la página https://ignaciomsarmiento.gi
 
 ```
 
-#Diccionario de datos !!!!!!!!!!!!!!!!!!
+Diccionario de datos
 ```{r}
 urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
 
@@ -218,7 +218,7 @@ data_filter <- data_filter %>%
 cat("El dataset con las variables seleccionadas para el análisis contiene", nrow(data_filter), "filas y", ncol(data_filter), "columnas.\n")
 ```
 
-## Revisión inicial de los datos
+Revisión inicial de los datos
 
 En esta sección se realizó una exploración preliminar de la base de datos con los siguientes objetivos:
 
@@ -270,7 +270,7 @@ list(
 
 ```
 
-## Revisión valores faltantes y ceros en la variable de ingreso
+Revisión valores faltantes y ceros en la variable de ingreso
 
 En este bloque de código se realiza un análisis exploratorio de los valores faltantes en la base de datos `data_filter`, siguiendo los pasos:
 
@@ -558,8 +558,11 @@ ggplot(datos_lim, aes(x = factor(formal, levels = c(0, 1), labels = c("No formal
 
 ```
 
-## 3. Perfil edad-salario
+# 3. Perfil edad-salario
 
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{age} + \beta_3 \cdot \text{age}^{2}+ u
+$$
 Crear la variable edad al cuadrado para el analisis
 ```{r}
 
@@ -637,9 +640,9 @@ kbl(tabla_peak, format = "latex", booktabs = TRUE,
 
 Inicio Z
 
-## 4.Brecha Salarial de género
+# 4.Brecha Salarial de género
 
-# 4.a Brecha incondicional
+## 4.a Brecha incondicional
 
 $$
 \ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + u
@@ -664,7 +667,7 @@ tidy(wage_gap, conf.int = TRUE) %>%
 
 ```
 
-# 4.b Brecha condicional con controles
+## 4.b Brecha condicional con controles
 
 $$
 \ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + \theta X + u
@@ -674,13 +677,12 @@ donde:
 
 -   $w$: salario\
 -   $\text{sex}$: variable binaria de sexo\
--   $X = \{ \text{edad}, \text{edad}^2, \text{educación}, \text{oficio}, \text{formalidad}, \text{tamaño de empresa} \}$\
+-   $X = \{ \text{edad}, \text{edad}^2, \text{educación}, \text{relab}, \text{formalidad}, \text{tamaño de empresa} \}$\
 -   $u$: término de error aleatorio
 
 ```{r}
 # Filtro de datos
-gap_cond <- lm(log_ingreso_hora~ sex_label + age + I(age^2) + max_educ_level +
-               relab + formal + size_firm, 
+gap_cond <- lm(log_ingreso_hora ~ sex_label + age + I(age^2) + max_educ_level + relab + formal + size_firm, 
              data = datos_lim)
 #Visualización de tabla
 tidy(gap_cond, conf.int = TRUE) %>%
@@ -716,7 +718,7 @@ tidy(gap_cond, conf.int = TRUE) %>%
 
 ```
 
-# 4.b.i FWL (Frisch-Waugh-Lovell)
+## 4.b.i FWL (Frisch-Waugh-Lovell)
 
 ```{r}
 # Paso 1: sex ~ X
@@ -750,7 +752,7 @@ gap_fwl
 
 ```
 
-# 4.b.ii FWL con bootstrap
+## 4.b.ii FWL con bootstrap
 
 ```{r}
 
@@ -787,8 +789,7 @@ results
 ```
 Fin Z 
 
-###############
-### PUNTO 5 ###
+# 5. Predicción
 
 Análisis de la tabla utilizada para verificar los modelos de prediccion 
 ```{r}
@@ -850,11 +851,10 @@ skim(datos_lim)
 sapply(datos_lim, class)
 
 ```
-Punto 5.a.
+## 5.a Muestra de entrenamiento y de prueba
+Establecer Muestra de entrenamiento (70%) y de prueba (30%)
 
 ```{r}
-# CARET
-
 set.seed(10101)  # Semilla para propositos de replicabilidad
 
 
@@ -885,12 +885,14 @@ ggplot(split_data, aes(x = Split, y = Count)) +
   theme_classic()
 ```
 
-Punto 5.b.
+## 5.b. Predicción en términos de RMSE
+Poder de predicción de modelos en términos de RMSE, teniendo en cuenta tanto los 3 modelos anteriores como 5 modelos nuevos.
 
-Modelos anteriores:
+ - MODELO 1
 
-#MODEL 1
-
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{age} + \beta_3 \cdot \text{age}^{2}+ u
+$$
 
 ```{r}
 form_1 <- log_ingreso_hora ~ age + I(age^2)
@@ -899,11 +901,14 @@ modelo1a <- lm(form_1,
 
 predictions <- predict(object = modelo1a, newdata = testing)
 score1a<- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
-score1a
+
+cat("El RMSE del Modelo 1 es:", round(score1a, 4), "\n")
 ```
+ - MODELO 2
 
-#MODEL 2
-
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + u
+$$
 ```{r}
 form_2 <- log_ingreso_hora ~ sex
 modelo2a <- lm(form_2,
@@ -911,21 +916,49 @@ modelo2a <- lm(form_2,
 
 predictions <- predict(object = modelo2a, newdata = testing)
 score2a<- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
-score2a
-```
 
-#MODEL 3
+cat("El RMSE del Modelo 2 es:", round(score2a, 4), "\n")
+```
+- MODELO 3
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + \beta_3 \cdot \text{age} + \beta_4 \cdot \text{age}^2 + \beta_5 \cdot \text{educ} + \beta_6 \cdot \text{relab} + \beta_7 \cdot \text{formal} + \beta_8 \cdot \text{size_firm} + u
+$$
+
+
 ```{r}
 form_3 <- log_ingreso_hora ~ sex + age + I(age^2) + max_educ_level +
-               oficio + formal + size_firm + hours_work_usual
-modelo3a <- lm(form_3,
-               data = training )
+               relab + formal + size_firm
+modelo3a <- lm(form_3, data = training)
 predictions <- predict(object = modelo3a, newdata = testing)
 score3a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
-score3a
+
+cat("El RMSE del Modelo 3 es:", round(score3a, 4), "\n")
 
 ```
-#MODEL 4
+ 
+ - MODEL 4
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{age} + \beta_3 \cdot \text{sex} + \beta_4 \cdot (\text{age} \cdot \text{sex}) + \beta_5 \cdot \text{age}^2 + \beta_6 \cdot \text{educ} + u
+$$
+```{r}
+form_4 <- log_ingreso_hora ~ age * sex + I(age^2) + max_educ_level
+
+modelo4a <- lm(form_4, data = training)
+
+predictions <- predict(object = modelo4a, newdata = testing)
+
+score4a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora)
+
+cat("El RMSE del Modelo 4 es:", round(score4a, 4), "\n")
+
+```
+
+
+
+
+
 ```{r}
 form_4 <- log_ingreso_hora ~ sex * max_educ_level + age + I(age^2)
 modelo4a <- lm(form_4,
