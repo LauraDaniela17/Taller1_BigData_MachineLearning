@@ -787,6 +787,332 @@ results
 ```
 Fin Z 
 
+###############
+### PUNTO 5 ###
+
+Análisis de la tabla utilizada para verificar los modelos de prediccion 
+```{r}
+head(datos_lim)
+names(datos_lim)
+```
+
+
+```{r}
+# Calcular el ancho de banda (binwidth) usando la regla de Scott
+num_binwidth <- 3.5 * sd(datos_lim$ingreso_hora_1) / length(datos_lim$ingreso_hora_1)^(1/3)
+num_binwidth <- round(x = num_binwidth, digits = 2)
+
+a<- ggplot(datos_lim, aes(x = ingreso_hora_1 )) +
+  geom_histogram(mapping = aes(y = (after_stat(count))/sum(after_stat(count))), 
+                 color ="#FFFFFF", fill= "sandybrown", show.legend = FALSE, na.rm = TRUE, 
+                 binwidth = num_binwidth, linewidth = 0.2, alpha = 0.8, closed = 'left') +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), 
+                     labels = scales::label_number(scale = 100)) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, NA)) +
+  geom_vline(xintercept = median(datos_lim$ingreso_hora_1, na.rm = TRUE), color = 'darkturquoise', linetype = 'solid') +
+  geom_vline(xintercept = mean(datos_lim$ingreso_hora_1, na.rm = TRUE), color = 'red', linetype = 'dashed') +
+  labs(x = "ingreso_hora_1", y = "Percent (%)") +
+  theme_classic() 
+a
+```
+
+```{r}
+num_binwidth <- 3.5 * sd(datos_lim$log_ingreso_hora) / length(datos_lim$log_ingreso_hora)^(1/3)
+num_binwidth <- round(x = num_binwidth, digits = 2)
+
+
+b <- ggplot(datos_lim, aes(x = log_ingreso_hora)) +
+  geom_histogram(mapping = aes(y = (after_stat(count))/sum(after_stat(count))), 
+                 color ="#FFFFFF", fill= "sandybrown", show.legend = FALSE, na.rm = TRUE, 
+                 binwidth = num_binwidth, linewidth = 0.2, alpha = 0.8, closed = 'left') +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), 
+                     labels = scales::label_number(scale = 100)) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, NA)) +
+  geom_vline(xintercept = median(datos_lim$log_ingreso_hora, na.rm = TRUE), color = 'darkturquoise', linetype = 'solid') +
+  geom_vline(xintercept = mean(datos_lim$log_ingreso_hora, na.rm = TRUE), color = 'red', linetype = 'dashed') +
+  labs(x = "Log Ingreso Por hora", y = "Percent (%)") +
+  theme_classic() 
+b
+```
+
+Visualización de histogramas de salario por hora y logaritmo de salario por hora
+
+```{r}
+grid.arrange(a,b, nrow = 2)
+```
+como se observa en los histogramas anteriores la distribucion de ingreso por hora tiene muy marcada la cola a la derecha, por esta razon se elegirá el logaritmo del ingreso por hora.
+
+```{r}
+skim(datos_lim)
+
+```
+```{r}
+sapply(datos_lim, class)
+
+```
+Punto 5.a.
+
+```{r}
+# CARET
+
+set.seed(10101)  # Semilla para propositos de replicabilidad
+
+
+inTrain <- createDataPartition(
+  y = datos_lim$log_ingreso_hora,  #especificar los datos requeridos
+  p = .70, # Porcentaje muestra de entrenamiento
+  list = FALSE
+)
+training <- datos_lim |> filter(row_number() %in% inTrain)
+testing  <- datos_lim |> filter(!(row_number() %in% inTrain))
+
+# Crear datos para visualizacion
+split_data <- data.frame(
+  Split = factor(c("Training", "Testing")),
+  Count = c(nrow(training), nrow(testing)),
+  Percentage = c(nrow(training)/nrow(datos_lim)*100, nrow(testing)/nrow(datos_lim)*100)
+)
+
+# Visualizacion de las muestras de entrenamiento y prueba
+ggplot(split_data, aes(x = Split, y = Count)) +
+  geom_bar(stat = "identity", fill = "darkturquoise", width = 0.5) +
+  geom_text(aes(label = paste0(round(Percentage, 1), "%\n(n=", Count, ")")), 
+            vjust = -0.5, color = "black", size = 4) +
+  labs(title = "Distribución muestra de entrenamiento y prueba",
+       y = "Numero de Observaciones",
+       x = "") +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) + #Escala de las etiquetas
+  theme_classic()
+```
+
+Punto 5.b.
+
+Modelos anteriores:
+
+```{r}
+rm(form_1)
+```
+
+
+#MODEL 1
+
+
+```{r}
+form_1 <- log_ingreso_hora ~ age + I(age^2)
+modelo1a <- lm(form_1,
+               data = training)
+
+predictions <- predict(object = modelo1a, newdata = testing)
+score1a<- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score1a
+```
+
+#MODEL 2
+
+```{r}
+form_2 <- log_ingreso_hora ~ sex
+modelo2a <- lm(form_2,
+               data = training )
+
+predictions <- predict(object = modelo2a, newdata = testing)
+score2a<- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score2a
+```
+
+#MODEL 3
+```{r}
+form_3 <- log_ingreso_hora ~ sex + age + I(age^2) + max_educ_level +
+               oficio + formal + size_firm + hours_work_usual
+modelo3a <- lm(form_3,
+               data = training )
+predictions <- predict(object = modelo3a, newdata = testing)
+score3a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score3a
+
+```
+#MODEL 4
+```{r}
+form_4 <- log_ingreso_hora ~ sex * max_educ_level + age + I(age^2)
+modelo4a <- lm(form_4,
+               data = training )
+predictions <- predict(object = modelo4a, newdata = testing)
+score4a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score4a
+
+```
+#MODEL 5
+```{r}
+form_5 <- log_ingreso_hora ~ 
+modelo5a <- lm(form_5,
+               data = training )
+predictions <- predict(object = modelo5a, newdata = testing)
+score5a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score5a
+```
+
+#MODEL 6
+```{r}
+form_6 <- log_ingreso_hora ~ 
+modelo6a <- lm(form_6,
+               data = training )
+predictions <- predict(object = modelo6a, newdata = testing)
+score6a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score6a
+```
+
+#MODEL 7
+```{r}
+form_7 <- log_ingreso_hora ~ 
+modelo7a <- lm(form_7,
+               data = training )
+predictions <- predict(object = modelo7a, newdata = testing)
+score7a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score7a
+```
+
+#MODEL 8
+```{r}
+form_8 <- log_ingreso_hora ~ 
+modelo8a <- lm(form_8,
+               data = training )
+predictions <- predict(object = modelo8a, newdata = testing)
+score8a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
+score8a
+```
+
+
+```{r}
+ctrl <- trainControl(
+  method = "cv", # Method for resampling. It could be CV, repeated CV, LOOCV, and so on. 
+  number = 5) # Number of folds. 
+```
+
+#MODEL 1
+```{r}
+set.seed(10101)  
+modelo1b <- train(
+  form_1, # Define the functional form (i.e the variable to predict and the features).
+  data = datos_lim, 
+  method = 'lm', # Algorithm. In this case, linear model. 
+  trControl = ctrl
+)  
+modelo1b
+```
+```{r}
+modelo1b$resample
+```
+```{r}
+score1b<- mean(modelo1b$resample$RMSE)
+score1b
+```
+#MODEL 2
+```{r}
+set.seed(10101)  
+modelo2b <- train(form_2,
+                  data = datos_lim,
+                  method = 'lm',
+                  trControl= ctrl)
+modelo2b
+```
+```{r}
+score2b<- mean(modelo2b$resample$RMSE)
+score2b
+```
+#MODEL 3
+```{r}
+set.seed(10101)  
+modelo3b <- train(form_3,
+                  data = datos_lim,
+                  method = 'lm', 
+                  trControl = ctrl)
+modelo3b
+```
+```{r}
+colSums(is.na(datos_lim))
+```
+```{r}
+form_3
+```
+
+```{r}
+# Calcular la moda en la variable max_educ_level
+moda <- names(sort(table(datos_lim$max_educ_level), decreasing = TRUE))[1]
+
+# Reemplazar los NA por la moda
+datos_lim$max_educ_level <- as.character(datos_lim$max_educ_level)
+datos_lim$max_educ_level[is.na(datos_lim$max_educ_level)] <- moda
+datos_lim$max_educ_level <- as.factor(datos_lim$max_educ_level)
+
+```
+
+
+```{r}
+score3b<- mean(modelo3b$resample$RMSE)
+score3b
+```
+#MODEL 4
+```{r}
+set.seed(69205)  
+modelo4b <- train(form_4,
+                  data = datos_lim,
+                  method = 'lm', 
+                  trControl= ctrl)
+modelo4b
+```
+```{r}
+score4b<- mean(modelo4b$resample$RMSE)
+score4b
+```
+```{r}
+
+```
+
+```{r}
+## RUN THE MODEL WITH ALL OBS
+full_model <- lm(form_1,
+                  data = datos_lim)
+
+X <- model.matrix(full_model)
+y <- model.response(model.frame(full_model))
+
+beta_hat <- full_model$coefficients
+  
+## Calculate the inverse of  (X'X), call it G_inv
+G_inv <- solve(t(X)%*%X)
+
+## and 1/1-hi
+vec <- 1/(1-hatvalues(full_model))
+  
+N <- nrow(X)  # Number of observations
+LOO <- numeric(N)  # To store the errors
+
+# Loop over each observation
+for (i in 1:N) {
+  # get the new beta
+  new_beta<- beta_hat  - vec[i] * G_inv %*% as.vector(X[i, ]) * full_model$residuals[i]
+    ## get the new error
+    new_error<- (y[i]- (X[i, ] %*% new_beta))^2
+  LOO[i]<-  new_error
+}
+  
+looCV_error <- mean(LOO)
+sqrt(looCV_error)
+
+```
+
+
+
+
+```{r}
+## Store the RMSE in dataframe
+scores <- data.frame(Model= c(1, 2, 3, 4),
+                    RMSE_vsa= c(score1a, score2a, score3a, score4a), 
+                    RMSE_kfold= c(score1b, score2b, score3b, score4b)
+                    )
+
+head(scores)
+```
+
 
 
 
