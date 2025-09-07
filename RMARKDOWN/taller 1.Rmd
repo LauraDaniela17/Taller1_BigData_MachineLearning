@@ -182,8 +182,8 @@ data_filter_inicial <- data_completa %>%
 
 # Revisamos nuevamente la cantidad de observaciones
 cat("El dataset filtrado contiene", nrow(data_filter_inicial), "filas y", ncol(data_filter_inicial), "columnas.\n")
-
 ```
+
 ## Selección de variables
 
 En este bloque se depura la base de datos filtrada (`data_filter`) para trabajar únicamente con las variables relevantes y se crea la variable de interés
@@ -203,9 +203,9 @@ Se conservan únicamente las siguientes 12 variables de interés:
 Creamos la variable dependiente de la siguiente manera: - **Númerador**: `impa` - **Denominador**: `hours_work_usual` \* 4.33 - Donde `4.33` corresponde al promedio de semanas en un mes (52 semanas / 12 meses).
 
 ```{r}
-# Se seleccionan de data_filter_inicial las variables independiente seleccionadas para el análisis
+# Se seleccionan de data_filter_inicial las variables independientes seleccionadas para el análisis
 
-data_filter <- data_filter_inicial %>% 
+data_filter <- data_filter_inicial %>%
   select(directorio, secuencia_p, orden,sex, age, relab, mes, formal,
          size_firm, max_educ_level, impa, hours_work_usual)
 
@@ -965,9 +965,12 @@ score5a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
 cat("El RMSE del Modelo 5 es:", round(score5a, 4), "\n")
 
 ```
- - VEA - MODELO 6
+
+#### 6 VSA - MODELO 6
+
 ```{r}
-form_6 <- log_ingreso_hora ~ sex + relab + formal + size_firm
+
+form_6 <- log_ingreso_hora ~ age + relab
 modelo6a <- lm(form_6,
                data = training )
 predictions <- predict(object = modelo6a, newdata = testing)
@@ -988,9 +991,11 @@ score7a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora)
 cat("El RMSE del Modelo 7 es:", round(score7a, 4), "\n")
 ```
 
- - VSA - MODELO 8
+
+
+### 8 - VSA - MODELO 8
 ```{r}
-form_8 <- log_ingreso_hora ~ max_educ_level * relab + formal + age + sex
+form_8 <- log_ingreso_hora ~ max_educ_level * relab + formal + age
 modelo8a <- lm(form_8,
                data = training )
 predictions <- predict(object = modelo8a, newdata = testing)
@@ -998,6 +1003,8 @@ score8a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
 
 cat("El RMSE del Modelo 8 es:", round(score8a, 4), "\n")
 ```
+
+
 ```{r}
 # Crear data frame con los resultados
 tabla_rmse <- data.frame(
@@ -1025,7 +1032,6 @@ print(tabla_rmse)
 ```{r}
 library(officer)
 library(flextable)
-
 
 # Convertir a flextable
 tabla_flex <- flextable(tabla_rmse)
@@ -1124,7 +1130,9 @@ score5b<- mean(modelo5b$resample$RMSE)
 cat("El RMSE del Modelo 5 es:", round(score5b, 4), "\n")
 
 ```
- - K-FOLD MODELO 6
+
+
+### k6 - K-FOLD MODELO 6
 ```{r}
 set.seed(10101)  
 modelo6b <- train(form_6,
@@ -1152,7 +1160,9 @@ cat("El RMSE del Modelo 7 es:", round(score7b, 4), "\n")
 
 ```
 
-- K-FOLD MODELO 8
+
+
+### 8 - K-FOLD MODELO 8
 ```{r}
 set.seed(10101)  
 modelo8b <- train(form_8,
@@ -1184,8 +1194,9 @@ scores
 
 ```{r}
 ## RUN THE MODEL WITH ALL OBS
+
 full_model <- lm(form_3,
-                  data = datos_lim)
+                  data = datos_lim )
 
 X <- model.matrix(full_model)
 y <- model.response(model.frame(full_model))
@@ -1196,12 +1207,12 @@ beta_hat <- full_model$coefficients
 G_inv <- solve(t(X)%*%X)
 
 ## and 1/1-hi
-vec <- 1/(1-hatvalues(full_model))
+vec<- 1/(1-hatvalues(full_model))
   
 N <- nrow(X)  # Number of observations
 LOO <- numeric(N)  # To store the errors
 
-# Loop over each observation
+  # Loop over each observation
 for (i in 1:N) {
   # get the new beta
   new_beta<- beta_hat  - vec[i] * G_inv %*% as.vector(X[i, ]) * full_model$residuals[i]
@@ -1214,36 +1225,50 @@ looCV_error <- mean(LOO)
 sqrt(looCV_error)
 
 ```
-```{r}
-ctrl_loocv <- trainControl(
-  method = "LOOCV"  # Leave-One-Out Cross-Validation
-)
-
-```
-
-
 
 ```{r}
-set.seed(10101)
-modelo3_loocv <- train(
-  form_3,
-  data = datos_lim,   # Usa todo el dataset
-  method = "lm",
-  trControl = ctrl_loocv
-)
+# ===========================
+# LOOCV específico para Modelo 3
+# ===========================
 
-# Obtener el RMSE
-modelo3_loocv$results$RMSE
+# Ajustar modelo completo con todos los datos
+modelo3_full <- lm(form_3, data = datos_lim)
+
+# Matriz de diseño X y vector respuesta y
+X3 <- model.matrix(modelo3_full)
+y3 <- model.response(model.frame(modelo3_full))
+
+# Estimador de coeficientes (beta_hat)
+beta_hat3 <- modelo3_full$coefficients
+
+# Inversa de (X'X) — ¡puede dar error si hay colinealidad perfecta!
+G_inv3 <- solve(t(X3) %*% X3)
+
+# Valores de leverage (h_ii)
+vec3 <- 1 / (1 - hatvalues(modelo3_full))
+
+# Número de observaciones
+N3 <- nrow(X3)
+
+# Vector para almacenar errores cuadráticos
+LOO3 <- numeric(N3)
+
+# Loop sobre cada observación
+for (i in 1:N3) {
+  # Coeficientes beta reestimados quitando la i-ésima observación
+  beta_new3 <- beta_hat3 - vec3[i] * G_inv3 %*% as.vector(X3[i, ]) * modelo3_full$residuals[i]
+  
+  # Error cuadrático LOOCV para la observación i
+  error_i3 <- (y3[i] - (X3[i, ] %*% beta_new3))^2
+  LOO3[i] <- error_i3
+}
+
+# Calcular error promedio y su raíz cuadrada (RMSE)
+error_promedio3 <- mean(LOO3)
+rmse_loocv3 <- sqrt(error_promedio3)
+
+# Imprimir resultado
+cat("RMSE LOOCV del Modelo 3:", round(rmse_loocv3, 4), "\n")
 
 ```
-
-
-
-
-
-
-
-
-
-
 
