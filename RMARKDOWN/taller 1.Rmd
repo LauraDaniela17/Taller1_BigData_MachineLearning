@@ -885,10 +885,10 @@ ggplot(split_data, aes(x = Split, y = Count)) +
   theme_classic()
 ```
 
-## 5.b. Predicción en términos de RMSE
+## 5.b Predicción en términos de RMSE
 Poder de predicción de modelos en términos de RMSE, teniendo en cuenta tanto los 3 modelos anteriores como 5 modelos nuevos.
 
- - MODELO 1
+ - Validation Set Approach VSA - MODELO 1
 
 $$
 \ln(w) = \beta_1 + \beta_2 \cdot \text{age} + \beta_3 \cdot \text{age}^{2}+ u
@@ -904,7 +904,7 @@ score1a<- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
 
 cat("El RMSE del Modelo 1 es:", round(score1a, 4), "\n")
 ```
- - MODELO 2
+ - VSA - MODELO 2
 
 $$
 \ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + u
@@ -919,7 +919,7 @@ score2a<- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
 
 cat("El RMSE del Modelo 2 es:", round(score2a, 4), "\n")
 ```
-- MODELO 3
+- VSA - MODELO 3
 
 $$
 \ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + \beta_3 \cdot \text{age} + \beta_4 \cdot \text{age}^2 + \beta_5 \cdot \text{educ} + \beta_6 \cdot \text{relab} + \beta_7 \cdot \text{formal} + \beta_8 \cdot \text{size_firm} + u
@@ -937,7 +937,7 @@ cat("El RMSE del Modelo 3 es:", round(score3a, 4), "\n")
 
 ```
  
- - MODEL 4
+ - VSA - MODELO 4
 
 $$
 \ln(w) = \beta_1 + \beta_2 \cdot \text{age} + \beta_3 \cdot \text{sex} + \beta_4 \cdot (\text{age} \cdot \text{sex}) + \beta_5 \cdot \text{age}^2 + \beta_6 \cdot \text{educ} + u
@@ -954,7 +954,7 @@ cat("El RMSE del Modelo 4 es:", round(score4a, 4), "\n")
 
 ```
 
- - MODELO 5
+ - VSA - MODELO 5
 ```{r}
 form_5 <- log_ingreso_hora ~ sex * max_educ_level + age
 modelo5a <- lm(form_5,
@@ -965,7 +965,7 @@ score5a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
 cat("El RMSE del Modelo 5 es:", round(score5a, 4), "\n")
 
 ```
- - MODELO 6
+ - VEA - MODELO 6
 ```{r}
 form_6 <- log_ingreso_hora ~ sex + relab + formal + size_firm
 modelo6a <- lm(form_6,
@@ -976,7 +976,7 @@ score6a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
 cat("El RMSE del Modelo 6 es:", round(score6a, 4), "\n")
 ```
 
-  - MODELO 7
+  - VSA - MODELO 7
 ```{r}
 form_7 <- log_ingreso_hora ~ age + formal * max_educ_level
 modelo7a <- lm(form_7,
@@ -988,7 +988,7 @@ score7a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora)
 cat("El RMSE del Modelo 7 es:", round(score7a, 4), "\n")
 ```
 
- - MODELO 8
+ - VSA - MODELO 8
 ```{r}
 form_8 <- log_ingreso_hora ~ max_educ_level * relab + formal + age + sex
 modelo8a <- lm(form_8,
@@ -1054,7 +1054,7 @@ ctrl <- trainControl(
   number = 5) # Number of folds.
 ```
 
- - MODELO 1
+ - K-FOLD MODELO 1
 ```{r}
 set.seed(10101)  
 modelo1b <- train(
@@ -1069,7 +1069,7 @@ score1b<- mean(modelo1b$resample$RMSE)
 cat("El RMSE del Modelo 1 es:", round(score1b, 4), "\n")
 
 ```
- - MODEL 2
+ - K-FOLD MODELO 2
 ```{r}
 set.seed(10101)  
 modelo2b <- train(form_2,
@@ -1083,58 +1083,108 @@ cat("El RMSE del Modelo 2 es:", round(score2b, 4), "\n")
 
 ```
 
-#MODEL 3
+- K-FOLD MODELO 3
 ```{r}
 set.seed(10101)  
 modelo3b <- train(form_3,
                   data = datos_lim,
-                  method = 'lm', 
-                  trControl = ctrl)
+                  method = 'lm',
+                  trControl= ctrl)
 modelo3b
-```
-```{r}
-colSums(is.na(datos_lim))
-```
-```{r}
-form_3
-```
-
-```{r}
-# Calcular la moda en la variable max_educ_level
-moda <- names(sort(table(datos_lim$max_educ_level), decreasing = TRUE))[1]
-
-# Reemplazar los NA por la moda
-datos_lim$max_educ_level <- as.character(datos_lim$max_educ_level)
-datos_lim$max_educ_level[is.na(datos_lim$max_educ_level)] <- moda
-datos_lim$max_educ_level <- as.factor(datos_lim$max_educ_level)
-
-```
-
-
-```{r}
+modelo3b$resample
 score3b<- mean(modelo3b$resample$RMSE)
-score3b
+cat("El RMSE del Modelo 3 es:", round(score3b, 4), "\n")
 ```
-#MODEL 4
+
+
+- K-FOLD MODELO 4
 ```{r}
-set.seed(69205)  
+set.seed(10101)  
 modelo4b <- train(form_4,
                   data = datos_lim,
-                  method = 'lm', 
+                  method = 'lm',
                   trControl= ctrl)
 modelo4b
-```
-```{r}
+modelo4b$resample
 score4b<- mean(modelo4b$resample$RMSE)
-score4b
+cat("El RMSE del Modelo 4 es:", round(score4b, 4), "\n")
 ```
+
+
+- K-FOLD MODELO 5
 ```{r}
+set.seed(10101)  
+modelo5b <- train(form_5,
+                  data = datos_lim,
+                  method = 'lm',
+                  trControl= ctrl)
+modelo5b
+modelo5b$resample
+score5b<- mean(modelo5b$resample$RMSE)
+cat("El RMSE del Modelo 5 es:", round(score5b, 4), "\n")
 
 ```
+ - K-FOLD MODELO 6
+```{r}
+set.seed(10101)  
+modelo6b <- train(form_6,
+                  data = datos_lim,
+                  method = 'lm',
+                  trControl= ctrl)
+modelo6b
+modelo6b$resample
+score6b<- mean(modelo6b$resample$RMSE)
+cat("El RMSE del Modelo 6 es:", round(score6b, 4), "\n")
+
+```
+
+- K-FOLD MODELO 7
+```{r}
+set.seed(10101)  
+modelo7b <- train(form_7,
+                  data = datos_lim,
+                  method = 'lm',
+                  trControl= ctrl)
+modelo7b
+modelo7b$resample
+score7b<- mean(modelo7b$resample$RMSE)
+cat("El RMSE del Modelo 7 es:", round(score7b, 4), "\n")
+
+```
+
+- K-FOLD MODELO 8
+```{r}
+set.seed(10101)  
+modelo8b <- train(form_8,
+                  data = datos_lim,
+                  method = 'lm',
+                  trControl= ctrl)
+modelo8b
+modelo8b$resample
+score8b<- mean(modelo8b$resample$RMSE)
+cat("El RMSE del Modelo 8 es:", round(score8b, 4), "\n")
+
+```
+## 5.c Resultados de los modelos
+
+```{r}
+## Dataframe de RMSE para comparar entre modelos
+scores <- data.frame(Model= c(1, 2, 3, 4, 5, 6, 7, 8),
+                    RMSE_vsa= c(score1a, score2a, score3a, score4a, score5a, score6a,
+                                score7a, score8a), 
+                    RMSE_kfold= c(score1b, score2b, score3b, score4b, score5b, score6b,
+                                  score7b, score8b)
+                    )
+
+scores
+```
+
+
+## 5.d LOOCV
 
 ```{r}
 ## RUN THE MODEL WITH ALL OBS
-full_model <- lm(form_1,
+full_model <- lm(form_3,
                   data = datos_lim)
 
 X <- model.matrix(full_model)
@@ -1164,19 +1214,34 @@ looCV_error <- mean(LOO)
 sqrt(looCV_error)
 
 ```
+```{r}
+ctrl_loocv <- trainControl(
+  method = "LOOCV"  # Leave-One-Out Cross-Validation
+)
 
+```
 
 
 
 ```{r}
-## Store the RMSE in dataframe
-scores <- data.frame(Model= c(1, 2, 3, 4),
-                    RMSE_vsa= c(score1a, score2a, score3a, score4a), 
-                    RMSE_kfold= c(score1b, score2b, score3b, score4b)
-                    )
+set.seed(10101)
+modelo3_loocv <- train(
+  form_3,
+  data = datos_lim,   # Usa todo el dataset
+  method = "lm",
+  trControl = ctrl_loocv
+)
 
-head(scores)
+# Obtener el RMSE
+modelo3_loocv$results$RMSE
+
 ```
+
+
+
+
+
+
 
 
 
