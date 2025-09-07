@@ -942,80 +942,119 @@ cat("El RMSE del Modelo 3 es:", round(score3a, 4), "\n")
 $$
 \ln(w) = \beta_1 + \beta_2 \cdot \text{age} + \beta_3 \cdot \text{sex} + \beta_4 \cdot (\text{age} \cdot \text{sex}) + \beta_5 \cdot \text{age}^2 + \beta_6 \cdot \text{educ} + u
 $$
+
 ```{r}
 form_4 <- log_ingreso_hora ~ age * sex + I(age^2) + max_educ_level
 
 modelo4a <- lm(form_4, data = training)
-
 predictions <- predict(object = modelo4a, newdata = testing)
-
 score4a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora)
 
 cat("El RMSE del Modelo 4 es:", round(score4a, 4), "\n")
 
 ```
 
-
-
-
-
+ - MODELO 5
 ```{r}
-form_4 <- log_ingreso_hora ~ sex * max_educ_level + age + I(age^2)
-modelo4a <- lm(form_4,
-               data = training )
-predictions <- predict(object = modelo4a, newdata = testing)
-score4a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
-score4a
-
-```
-#MODEL 5
-```{r}
-form_5 <- log_ingreso_hora ~ 
+form_5 <- log_ingreso_hora ~ sex * max_educ_level + age
 modelo5a <- lm(form_5,
                data = training )
 predictions <- predict(object = modelo5a, newdata = testing)
 score5a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
-score5a
-```
 
-#MODEL 6
+cat("El RMSE del Modelo 5 es:", round(score5a, 4), "\n")
+
+```
+ - MODELO 6
 ```{r}
-form_6 <- log_ingreso_hora ~ 
+form_6 <- log_ingreso_hora ~ sex + relab + formal + size_firm
 modelo6a <- lm(form_6,
                data = training )
 predictions <- predict(object = modelo6a, newdata = testing)
 score6a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
-score6a
+
+cat("El RMSE del Modelo 6 es:", round(score6a, 4), "\n")
 ```
 
-#MODEL 7
+  - MODELO 7
 ```{r}
-form_7 <- log_ingreso_hora ~ 
+form_7 <- log_ingreso_hora ~ age + formal * max_educ_level
 modelo7a <- lm(form_7,
-               data = training )
+               data = training)
+
 predictions <- predict(object = modelo7a, newdata = testing)
-score7a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
-score7a
+score7a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora)
+
+cat("El RMSE del Modelo 7 es:", round(score7a, 4), "\n")
 ```
 
-#MODEL 8
+ - MODELO 8
 ```{r}
-form_8 <- log_ingreso_hora ~ 
+form_8 <- log_ingreso_hora ~ max_educ_level * relab + formal + age + sex
 modelo8a <- lm(form_8,
                data = training )
 predictions <- predict(object = modelo8a, newdata = testing)
 score8a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora )
-score8a
+
+cat("El RMSE del Modelo 8 es:", round(score8a, 4), "\n")
+```
+```{r}
+# Crear data frame con los resultados
+tabla_rmse <- data.frame(
+  Modelo = paste("Modelo", 1:8),
+  Dependiente = rep("Log Ingreso por hora", 8),
+  Especificación_Modelo = c(
+    "Edad + Edad²",
+    "Sexo",
+    "Sexo + Edad + Edad² + Educación + Tipo Ocupación + Formal + Tamaño empresa",
+    "Sexo * Edad + Edad² + Educación",
+    "Sexo * Educación + Edad",
+    "Sexo + Tipo Ocupación + Formal + Tamaño empresa",
+    "Edad + Educación * Formal",
+    "Educación * Tipo Ocupación + Formal + Edad + Sexo"
+  ),
+  RMSE = round(c(score1a, score2a, score3a, score4a, score5a, score6a, score7a, score8a), 4),
+  stringsAsFactors = FALSE
+)
+
+# Ver tabla
+print(tabla_rmse)
+
+
+```
+```{r}
+library(officer)
+library(flextable)
+
+
+# Convertir a flextable
+tabla_flex <- flextable(tabla_rmse)
+
+# Opcional: ajustar estilo
+tabla_flex <- tabla_flex |> 
+  autofit() |> 
+  align(align = "center", part = "all") |> 
+  bold(part = "header") |> 
+  set_table_properties(width = .95, layout = "autofit")
+
+# Crear documento Word
+doc <- read_docx() |> 
+  body_add_par("Resumen de Modelos Predictivos con RMSE", style = "heading 1") |> 
+  body_add_flextable(tabla_flex)
+
+# Guardar
+print(doc, target = "Resumen_Modelos_RMSE.docx")
+
 ```
 
-
+- K-FOLD
 ```{r}
 ctrl <- trainControl(
-  method = "cv", # Method for resampling. It could be CV, repeated CV, LOOCV, and so on. 
-  number = 5) # Number of folds. 
+  method = "cv", # Method for resampling. 
+  number = 5) # Number of folds.
 ```
 
-#MODEL 1
+ - MODELO 1
 ```{r}
 set.seed(10101)  
 modelo1b <- train(
@@ -1025,15 +1064,12 @@ modelo1b <- train(
   trControl = ctrl
 )  
 modelo1b
-```
-```{r}
 modelo1b$resample
-```
-```{r}
 score1b<- mean(modelo1b$resample$RMSE)
-score1b
+cat("El RMSE del Modelo 1 es:", round(score1b, 4), "\n")
+
 ```
-#MODEL 2
+ - MODEL 2
 ```{r}
 set.seed(10101)  
 modelo2b <- train(form_2,
@@ -1041,11 +1077,12 @@ modelo2b <- train(form_2,
                   method = 'lm',
                   trControl= ctrl)
 modelo2b
-```
-```{r}
+modelo2b$resample
 score2b<- mean(modelo2b$resample$RMSE)
-score2b
+cat("El RMSE del Modelo 2 es:", round(score2b, 4), "\n")
+
 ```
+
 #MODEL 3
 ```{r}
 set.seed(10101)  
