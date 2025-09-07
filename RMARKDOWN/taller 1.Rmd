@@ -995,7 +995,7 @@ cat("El RMSE del Modelo 7 es:", round(score7a, 4), "\n")
 
 ### 8 - VSA - MODELO 8
 ```{r}
-form_8 <- log_ingreso_hora ~ max_educ_level * relab + formal + age
+form_8 <- log_ingreso_hora ~ max_educ_level * relab + age
 modelo8a <- lm(form_8,
                data = training )
 predictions <- predict(object = modelo8a, newdata = testing)
@@ -1269,6 +1269,52 @@ rmse_loocv3 <- sqrt(error_promedio3)
 
 # Imprimir resultado
 cat("RMSE LOOCV del Modelo 3:", round(rmse_loocv3, 4), "\n")
+
+```
+
+```{r}
+# ===========================
+# LOOCV específico para Modelo 7
+# ===========================
+
+# Ajustar modelo completo con todos los datos
+modelo7_full <- lm(form_7, data = datos_lim)
+
+# Matriz de diseño X y vector respuesta y
+X7 <- model.matrix(modelo7_full)
+y7 <- model.response(model.frame(modelo7_full))
+
+# Estimador de coeficientes (beta_hat)
+beta_hat7 <- modelo7_full$coefficients
+
+# Inversa de (X'X)
+G_inv7 <- solve(t(X7) %*% X7)
+
+# Valores de leverage (h_ii)
+vec7 <- 1 / (1 - hatvalues(modelo7_full))
+
+# Número de observaciones
+N7 <- nrow(X7)
+
+# Vector para almacenar errores cuadráticos
+LOO7 <- numeric(N7)
+
+# Loop sobre cada observación
+for (i in 1:N7) {
+  # Coeficientes beta reestimados quitando la i-ésima observación
+  beta_new7 <- beta_hat7 - vec7[i] * G_inv7 %*% as.vector(X7[i, ]) * modelo7_full$residuals[i]
+  
+  # Error cuadrático LOOCV para la observación i
+  error_i7 <- (y7[i] - (X7[i, ] %*% beta_new7))^2
+  LOO7[i] <- error_i7
+}
+
+# Calcular error promedio y su raíz cuadrada (RMSE)
+error_promedio7 <- mean(LOO7)
+rmse_loocv7 <- sqrt(error_promedio7)
+
+# Imprimir resultado
+cat("RMSE LOOCV del Modelo 7:", round(rmse_loocv7, 4), "\n")
 
 ```
 
