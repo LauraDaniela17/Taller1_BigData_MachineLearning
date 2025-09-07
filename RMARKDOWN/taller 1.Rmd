@@ -1265,9 +1265,28 @@ cat("RMSE LOOCV del Modelo 7:", round(rmse_loocv7, 4), "\n")
 ResultadosRMSE<- data.frame( Modelo = c(1, 2),
                     RMSE_vsa1= c(score3a, score7a), 
                     RMSE_kfold1= c(score3b, score7b),
-                    RMSE_loocv1= c(rmse_loocv3, rmse_loocv7)
+                    RMSE_loocv1= c(rmse_loocv3,
+                                   rmse_loocv7)
                     )
 
 ResultadosRMSE
+```
+
+```{r}
+## let's change the way of saving the data.
+
+RMSE_vsa2   <-  c(score3a, score7a) 
+RMSE_kfold2 <-  c(score3b, score7b)
+RMSE_loocv2 <-  c(rmse_loocv3, rmse_loocv7)
+
+
+scores3 <- data.frame( Modelo = rep(c(1, 2),3),
+                     Approach= c(rep("VSA",4),rep("K-Fold",4),rep("LOOCV",4)),
+                     RMSE= c(RMSE_vsa2, RMSE_kfold2, RMSE_loocv2)
+                    )
+
+ggplot(scores3, ) + 
+  geom_line(aes(x=Modelo,y=RMSE,col=Approach), size=0.5)+
+  theme_bw() 
 ```
 
