@@ -83,8 +83,8 @@ pacman::p_load(rvest, #Web scrapping
                corrplot, #Matrices de correlación
                survey, #Manejo de encuestas complejas
                ggplot2, #Gráficas
-               kableExtra #Exportar tablas a Latex
-               ) 
+               kableExtra, #Exportar tablas a Latex
+               knitr) 
 
 pacman::p_loaded()
 ```
@@ -521,7 +521,7 @@ porcentajes <- datos_lim %>%
   )
 
 # Gráfico
-ggplot(data_filter, aes(x = factor(formal, levels = c(0, 1), labels = c("No formal", "Formal")))) +
+ggplot(datos_lim, aes(x = factor(formal, levels = c(0, 1), labels = c("No formal", "Formal")))) +
   geom_bar(fill = "#4682B4", width = 0.6) +
   geom_text(
     data = porcentajes,
@@ -546,11 +546,9 @@ ggplot(data_filter, aes(x = factor(formal, levels = c(0, 1), labels = c("No form
 
 ```
 
-
-
-
 ## 3. Perfil edad-salario
 
+Crear la variable edad al cuadrado para el analisis
 ```{r}
 
 datos_lim <- datos_lim %>%
@@ -564,7 +562,6 @@ summary(age_wage_reg)
 ## Bootstrap
 
 ```{r}
-
 set.seed(10101)
 
 b <- coef(age_wage_reg)
@@ -572,7 +569,12 @@ peak_hat <- - b["age"]/(2*b["age2"])
 
 B <- 1000
 n <- nrow(datos_lim)
+n
 
+```
+
+```{r}
+set.seed(10101)
 boot_peak <- replicate(B, {
   idx <- sample.int(n, size = n, replace = TRUE)
   fit <- lm(log_ingreso_hora ~ age + age2, data = datos_lim[idx, ])
@@ -580,14 +582,26 @@ boot_peak <- replicate(B, {
   if (is.na(bb["age2"]) || abs(bb["age2"]) < 1e-10) return(NA_real_)
   - bb["age"] / (2*bb["age2"])
 })
-
 boot_peak <- boot_peak[is.finite(boot_peak)]
+
+```
+
+```{r}
+set.seed(10101)
 ci_perc <- quantile(boot_peak, c(0.025, 0.975), na.rm = TRUE)
 
 # Percentiles sin nombres para evitar problemas de rownames
+valid <- is.finite(boot_peak)
 ci_perc <- quantile(boot_peak[valid], c(0.025, 0.975), na.rm = TRUE, names = FALSE)
 
+ci_perc #Intervalo de confianza
+
+```
+
+```{r}
+
 # Construir la tabla sin rownames
+n_valid <- sum(is.finite(boot_peak))
 tabla_peak <- data.frame(
   Estadistico = c("Edad pico (puntual)",
                   "IC 95% percentil (LI)",
@@ -597,7 +611,11 @@ tabla_peak <- data.frame(
   stringsAsFactors = FALSE,
   row.names = NULL
 )
+tabla_peak
+```
 
+Exportar tabla
+```{r}
 kbl(tabla_peak, format = "latex", booktabs = TRUE,
     caption = "Edad pico del perfil edad–salario (OLS, bootstrap percentil)") |>
   kable_styling(latex_options = c("hold_position")) |>
