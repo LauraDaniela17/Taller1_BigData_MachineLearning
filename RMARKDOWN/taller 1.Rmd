@@ -184,7 +184,6 @@ data_filter_inicial <- data_completa %>%
 cat("El dataset filtrado contiene", nrow(data_filter_inicial), "filas y", ncol(data_filter_inicial), "columnas.\n")
 
 ```
-
 ## Selección de variables
 
 En este bloque se depura la base de datos filtrada (`data_filter`) para trabajar únicamente con las variables relevantes y se crea la variable de interés
@@ -301,8 +300,12 @@ data_miss<- data_miss %>% mutate(p_missing= n_missing/Obs)
 
 #Eliminar los que no tienen datos faltantes
 data_miss<- data_miss %>% filter(n_missing!= 0)
-View(data_miss)
+head(data_miss)
 
+```
+
+
+```{r}
 # Revisar los datos faltantes gráficamente:
 ggplot(data_miss, aes(x = reorder(skim_variable, +p_missing) , y =  p_missing)) +
   geom_bar(stat = "identity", fill = "skyblue", color = "black") +
@@ -403,12 +406,14 @@ cat("El diccionario de niveles y etiquetas contiene", nrow(data_levels), "filas 
 
 ```
 
-
 ```{r}
-# Revisamos nuevamente la estructura de los datos
+# Revisar nuevamente la estructura de los datos
 str(data_filter)
+```
 
-# Cambiamos a factor las variables que son categóricas
+Transformaciones a Factor
+```{r}
+# Cambiar a factor las variables que son categóricas
 data_filter <- data_filter %>%
   mutate(
     sex_label = factor(sex, 
