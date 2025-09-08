@@ -1,7 +1,7 @@
 # "Taller1_BigData_MachineLearning": Predicción de Ingresos (GEIH 2018 - Bogotá)
 Taller1_BigData_MachineLearning: Predicción de Ingresos (GEIH 2018 - Bogotá)
 
-## 📌 Descripción
+## Descripción
 Este repositorio contiene el desarollo del **Taller1_BigData_MachineLearning** (Maestría en Economía Aplicada - Universidad de Los Andes).  
 El objetivo es **estimar y predecir salarios por hora** en Bogotá usando la **GEIH 2018**.  
 El análisis incluye:
@@ -9,7 +9,7 @@ El análisis incluye:
 - Brecha salarial de género (incondicional y condicional, FWL y bootstrap).  
 - Modelos de predicción y validación de RMSE (VSA, K-FOLD y LOOCV).  
 ---
-## 📂 Estructura del repositorio
+## Estructura del repositorio
 
 El repositorio incluye:
 - Documentos complementarios  ---->    # Datos del DANE_PobrezaMonetaria y Formulación del trabajo a desarrollar
@@ -18,17 +18,17 @@ El repositorio incluye:
 - Visuales      ---->        # Carpeta con tablas y gráficos finales
 - Documento final ---->  # Carpeta con el documento consolidado, incluye tablas, gráficas y los análisis correspondientes.
 
-## 📊 Resultados principales
+## Resultados principales
 - El salario crece con la edad hasta un pico cercano a los 50 años.
 - Existe brecha salarial de género, que se reduce al controlar por educación y ocupación, pero no desaparece.
 - Los modelos lineales simples tienen mejor capacidad de predicción de acuerdo con las variables que se seleccionen.
 
-## 👥 Equipo
+## Equipo
 - Cristian Felipe Muñoz Guerrero 
 - Zeneth Olivero Tapia
 - Laura Daniela Torres Diaz
 - Vivian Cabanzo Fernandez
-
 Cada miembro aportó al menos cinco contribuciones al repositorio.
+
+## Insumos principales
 - DANE – Gran Encuesta Integrada de Hogares (GEIH) 2018.
-- Wooldridge, J. M. Econometric Analysis of Cross Section and Panel Data. MIT Press.
