@@ -7,17 +7,15 @@ El objetivo es **estimar y predecir salarios horarios** en Bogotá usando la **G
 El análisis incluye:
 - Perfil edad–salario.  
 - Brecha salarial de género (incondicional y condicional, FWL y bootstrap).  
-- Modelos de predicción y validación (RMSE y LOOCV).  
+- Modelos de predicción y validación de RMSE (VSA, K-FOLD y LOOCV).  
 ---
 ## 📂 Estructura del repositorio
 
-El repositorio sigue la plantilla solicitada en el enunciado:
-- Documentos complementarios  ---->    # Datos del DANE_PobrezaMonetaria
-- RMARKDOW   ---->    # Carpeta con los scripts, limpieza de datos y Formulación del Taller
-- Slides ---->              # Carpeta con las presentaciones en PDF
-- Output      ---->        # Carpeta donde se guardan tablas y gráficos finales
-- Scripts          ---->   # Carpeta con el código en R
-
+El repositorio incluye:
+- Documentos complementarios  ---->    # Datos del DANE_PobrezaMonetaria y Formulación del trabajo a desarrollar
+- RMARKDOW   ---->    # Carpeta con el script del desarrollo de los puntos
+- Slides ---->              # Carpeta con las presentaciones
+- Output      ---->        # Carpeta con tablas y gráficos finales
 
 ## 🔄 Cómo correr el proyecto
 1. Clonar el repositorio:
@@ -28,7 +26,7 @@ El repositorio sigue la plantilla solicitada en el enunciado:
 ## 📊 Resultados principales
 - El salario crece con la edad hasta un pico cercano a los 50 años.
 - Existe brecha salarial de género, que se reduce al controlar por educación y ocupación, pero no desaparece.
-- Los modelos más complejos (polinomios, LASSO, Random Forest) predicen mejor que los modelos lineales simples.
+- Los modelos lineales simples tienen mejor capacidad de predicción de acuerdo con las variables que se seleccionen.
 
 ## 👥 Equipo
 - Cristian Felipe Muñoz Guerrero 
@@ -37,7 +35,5 @@ El repositorio sigue la plantilla solicitada en el enunciado:
 - Vivian Cabanzo Fernandez
 
 Cada miembro aportó al menos cinco contribuciones al repositorio.
-
-## 📚 Referencias
 - DANE – Gran Encuesta Integrada de Hogares (GEIH) 2018.
 - Wooldridge, J. M. Econometric Analysis of Cross Section and Panel Data. MIT Press.
