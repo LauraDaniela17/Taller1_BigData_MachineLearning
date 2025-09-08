@@ -685,16 +685,6 @@ tabla_peak <- data.frame(
 tabla_peak
 ```
 
-Exportar tabla
-```{r}
-kbl(tabla_peak, format = "latex", booktabs = TRUE,
-    caption = "Edad pico del perfil edad–salario (OLS, bootstrap percentil)") |>
-  kable_styling(latex_options = c("hold_position")) |>
-  save_kable("tabla_edad_pico_bonita.tex")
-
-```
-
-
 # 4.Brecha Salarial de género
 
 ## 4.a Brecha incondicional
@@ -842,7 +832,7 @@ results <- data.frame(
 )
 results
 ```
-Fin ZZ
+
 
 # 5. Predicción
 
