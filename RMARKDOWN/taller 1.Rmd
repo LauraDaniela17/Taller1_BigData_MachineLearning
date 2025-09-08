@@ -9,28 +9,7 @@ editor_options:
     wrap: sentence
 ---
 
-
-# 1. Introducción
-
-La investigación sobre la distribución de los ingresos derivados del trabajo y factores que conllevan a diferencias salariales han sido un foco significativo en los estudios económicos y políticos.
-Entender estos factores de edad, los estudios, el tiempo trabajado, la ocupación y el género en los ingresos permite no solo explicar las desigualdades en el mercado laboral, sino también buscar formas más justas y eficientes en la asignación de recursos.
-Por eso, esta presente investigación busca analizar cómo cambia el ingreso en edad – salario, la brecha salarial de género y la ejecución de diversos modelos de predicción de ingresos en Bogotá, haciendo uso de datos sobre la población ocupada.
-
-La fuente de información tomada es la Gran Encuesta Integrada de Hogares (GEIH) 2018, elaborada por el DANE, elaboramos una muestra de personas que viven en Bogotá.
-Es una encuesta adecuada para el propósito del análisis, ya que incluye datos claves como el ingreso laboral, caracterización, demográficas y condiciones laborales.
-Esto nos permite hacer uso de variables para estimaciones que reflejan las diferencias observables entre individuos como los patrones generales del mercado laboral.
-
-En el primero componente, nos enfocamos en el análisis en el perfil edad – salario, estimando la relación entre la edad de los trabajadores y su ingreso por hora.
-Se evidencia que los ingresos aumentan con la edad y la experiencia hasta alcanzar un punto máximo en la mediana edad (40 – 45 años de edad), seguido tiende a estabilizarse y/o decrecer, tal como lo indica la teoría del capital humano.
-El segundo componente abordamos la brecha salarial de género, que siguen después de controlar por variables de educación y experiencia.
-Aunque parte de la diferencia es por variables observables, y el análisis sugiere factores más profundos como una posible discriminación en diversos aspectos.
-
-Por último, se evalúa que tan bien predicen distintos modelos econométricos.
-Comparando la regresión lineal, polinomiales y otros métodos como LASSO y Random Forest.
-Los resultados nos dicen que \_\_\_\_XXXXXX\_\_\_\_.
-
-Investigar sobre como se distribuyen los ingresos que se generan del trabajo y que factores contribuyen a las diferencias salariales ha sido un tema importante en los estudios económicos y políticos.
- 
+## Configuración 
 
 El primer bloque de código se utiliza para preparar el entorno de trabajo antes de iniciar el análisis de los datos.
 
@@ -90,8 +69,8 @@ pacman::p_load(rvest, #Web scrapping
                gt, # Estadísticas descriptivas
                gtsummary,
                caret, # For predictive model assessment.
-               gridExtra # Arrange plots.
-               ) 
+               gridExtra, # Arrange plots.
+               labelled) #Para etiquetas
 
 pacman::p_loaded()
 ```
@@ -141,11 +120,12 @@ cat("El dataset de la GEIH descargado de la página https://ignaciomsarmiento.gi
 
 ```
 
-Diccionario de datos
-```{r}
-urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html"
+- Diccionario de datos
 
-data_diccionario <- funcion_para_leer_tablas(urls2)
+```{r}
+urls2 <- "https://ignaciomsarmiento.github.io/GEIH2018_sample/dictionary.html" #URL del diccionario de datos
+
+data_diccionario <- funcion_para_leer_tablas(urls2) #Aplicamos la función para leer tablas
 head(data_diccionario)
 
 cat("El diccionario de variables contiene", nrow(data_diccionario), "filas y", ncol(data_diccionario), "columnas.\n")
@@ -156,7 +136,9 @@ cat("El diccionario de variables contiene", nrow(data_diccionario), "filas y", n
 
 ## Revisión inicial de los datos
 
-Revisión inicial de la estructuración de los datos; cantidad de observaciones, tipos de datos, nombre de variables, identificación de valores faltantes (NA).
+Revisión inicial de la estructuración de los datos:
+
+cantidad de observaciones, tipos de datos, nombre de variables.
 
 
 ```{r}
@@ -170,10 +152,10 @@ names(data_completa)
 head(data_completa)
 # tail para ver las ultimas   
 tail(data_completa)
- 
-# Una vez encontradas las variables de interés para la selección de la muestra, las cuales son age y ocu, procedemos a filtrar data_completa
 
 ```
+
+Una vez encontradas las variables de interés para la selección de la muestra, las cuales son age y ocu, procedemos a filtrar data_completa
 
 ```{r}
 ## Filtrar observaciones inferiores a los 18 años de edad y no ocupados
@@ -218,7 +200,8 @@ data_filter <- data_filter %>%
 cat("El dataset con las variables seleccionadas para el análisis contiene", nrow(data_filter), "filas y", ncol(data_filter), "columnas.\n")
 ```
 
-Revisión inicial de los datos
+
+## Segunda revisión de datos:
 
 En esta sección se realizó una exploración preliminar de la base de datos con los siguientes objetivos:
 
@@ -270,7 +253,7 @@ list(
 
 ```
 
-Revisión valores faltantes y ceros en la variable de ingreso
+## Revisión valores faltantes y ceros en la variable de ingreso
 
 En este bloque de código se realiza un análisis exploratorio de los valores faltantes en la base de datos `data_filter`, siguiendo los pasos:
 
@@ -376,19 +359,24 @@ plot_outlier <- ggplot(data = data_filter, aes(x = "", y = ingreso_hora_1)) +
 # Mostrar el gráfico
 print(plot_outlier)
 ```
+
+
 ## Manipulación final de datos
 
 En esta etapa se realizaron dos procesos fundamentales:
 
-1.  **transformación de variables categóricas:**\
+1.  **transformación de variables categóricas:**
     Se identificaron aquellas variables que originalmente estaban codificadas con números enteros pero que representan categorías. Estas fueron convertidas a factores y se les asignaron etiquetas descriptivas para facilitar su interpretación.
-    -   `sex` → `sexo`: recodificada como **Mujer** y **Hombre**.\
+    -   `sex` → `sexo`: recodificada como **Mujer** y **Hombre**.
     -   `formal`: clasificada en **Informal** y **Formal**.
     -   `Relab`: transformada en factor.
-    -   `size_firm`: recodificada en categorías que representan el **tamaño de la empresa** (auto-empleado, 2–5 empleados, 6–10 empleados, 11–15 empleados y más de 50).\
-    -   `max_educ_level`: recodificada a niveles educativos alcanzados (ninguno, preescolar, primaria, secundaria, terciaria, N/A).\
+    -   `size_firm`: recodificada en categorías que representan el **tamaño de la empresa** (auto-empleado, 2–5 empleados, 6–10 empleados, 11–15 empleados y más de 50).
+    -   `max_educ_level`: recodificada a niveles educativos alcanzados (ninguno, preescolar, primaria, secundaria, terciaria, N/A).
     
-2.  **Tratamiento de la variable de ingresos:**
+2. **Manipulación de los valores faltantes:**
+    Para la variable `max_educ_level` se realizó una manipulación de su unico valor faltante mediante la imputación de su moda.
+    
+3.  **Tratamiento de la variable de ingresos:**
     -   Se eliminan las observaciones con **ingreso por hora igual a cero**, dado que no son válidas para el análisis de logaritmos y, además, podrían distorsionar la interpretación del salario.\
     -   Se crea la nueva variable `log_ingreso_hora`, que corresponde al **logaritmo natural del ingreso por hora**. Esta transformación ayuda a reducir la influencia de valores atípicos (outliers) y aproxima la distribución de la variable a una forma más cercana a la normalidad.
 
@@ -406,12 +394,6 @@ cat("El diccionario de niveles y etiquetas contiene", nrow(data_levels), "filas 
 
 ```
 
-```{r}
-# Revisar nuevamente la estructura de los datos
-str(data_filter)
-```
-
-Transformaciones a Factor
 ```{r}
 # Cambiar a factor las variables que son categóricas
 data_filter <- data_filter %>%
@@ -437,26 +419,16 @@ data_filter <- data_filter %>%
                        levels = c(1, 2, 3, 4, 5),
                        labels = c("auto-empleado", 
                                   "2-5 empleados", 
-                                  "6-510 empleados", 
+                                  "6-10 empleados", 
                                   "11-15 empleados", 
-                                  "Más de 50")),
+                                  "Más de 15")),
     max_educ_level = factor(max_educ_level,
                             levels = c(1, 2, 3, 4, 5, 6, 7, 9),
                             labels = c("Ninguno", "Preescolar", "Primaria imcompleta", "Primaria completa", "Secundaria incompleta", "Secundaria completa", "Terciaria", "N/A")),
   )
-
-# Manipulación de la variable ingreso por hora para reducción de peso de outliers
-data_filter <- data_filter %>%
-  filter(ingreso_hora_1> 0) %>%  # elimina ceros porque logaritmo no permite tener 0
-  mutate(log_ingreso_hora = log(ingreso_hora_1))
-
-colnames(data_filter)
-
 ```
-```{r}
-colSums(is.na(data_filter))
-```
-Imputar el valor faltante de Maximo nivel de educacion
+
+
 ```{r}
 # Calcular la moda en la variable max_educ_level
 moda <- names(sort(table(data_filter$max_educ_level), decreasing = TRUE))[1]
@@ -467,11 +439,17 @@ data_filter$max_educ_level <- as.factor(data_filter$max_educ_level)
 
 #Se eliminó el valor faltante en la variable
 colSums(is.na(data_filter))
-
-
 ```
+
+
 ```{r}
-str(data_filter)
+# Manipulación de la variable ingreso por hora para reducción de peso de outliers
+data_filter <- data_filter %>%
+  filter(ingreso_hora_1> 0) %>%  # elimina ceros porque logaritmo no permite tener 0
+  mutate(log_ingreso_hora = log(ingreso_hora_1))
+
+colnames(data_filter)
+
 ```
 
 Renombrar dataset final para analisis de los modelos de los puntos posteriores.
@@ -482,81 +460,129 @@ datos_lim <- data_filter
 
 ## Estadísticas descriptivas de las variables
 
+
+Se realizó un análisis descriptivo de las principales variables de interés de la base de datos.  
+El objetivo fue comparar características socioeconómicas y laborales por sexo.
+
+1.  Se incluyeron medidas de tendencia central y dispersión:  
+   - Media  
+   - Desviación estándar  
+   - Diferencia de medias  
+   - Error estándar de la diferencia
+   
+2. Para las variables categóricas (educación, formalidad y tamaño de la firma), se reportaron **frecuencias absolutas y porcentajes** en cada grupo.  
+
+3. Gráficas descriptivas:
+   - Gráfica de densidad del logaritmo del ingreso por hora para mujeres y hombres
+   - Gráfica de violín para diferenciación entre niveles educativos
+   - Gráfica boxplot para relacionar ingresos con modalidad de trabajo
+
+
 ```{r}
 
-# Tabla descriptiva general
-# Seleccionar solo las variables deseadas
-vars <- data_filter[, c("ingreso_hora_1", "age", "hours_work_usual", "max_educ_level", "sex_label")]
+#Renombramos variables
+data_labels <- data_filter %>%
+  rename(
+    "Ingreso por hora"= ingreso_hora_1,
+    "Edad" = age,
+    "Horas trabajadas"  = hours_work_usual,
+    "Nivel educativo máximo"= max_educ_level,
+    "Formalidad"= formal,
+    "Tamaño de la firma"= size_firm,
+    "Tipo de trabajo"= relab
+  )
 
-# Generar resumen
-datasummary_skim(vars, output = "gt", histogram = FALSE)
-
-
+# Tabla de descriptivos
 datasummary_balance(
-  ingreso_hora_1 + age + hours_work_usual + max_educ_level ~ sex_label,
-  data = data_filter,
-  fmt = 2
+  `Ingreso por hora` + Edad + `Horas trabajadas` +
+    `Nivel educativo máximo` + Formalidad + `Tamaño de la firma` +
+    `Tipo de trabajo` ~ sex_label,
+  data = data_labels,
+  fmt = 2,
+  title = "Tabla de descriptivas"
 )
 ```
 
 
 
 ```{r}
-ggplot(datos_lim, aes(x = max_educ_level, y = log_ingreso_hora)) +
-  geom_boxplot(fill = "#81D4FA") +
+
+# Grafica de densidad
+G_2 <- ggplot(datos_lim, aes(x = log_ingreso_hora, fill = sex_label)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribución del logaritmo del ingreso por hora por sexo",
+       x = "Log(Ingreso por hora)", y = "Densidad", fill = "Sexo")
+
+# Guardar en PDF (7x5 pulgadas)
+ggsave("C:/Users/ASUS/OneDrive - Universidad de los andes/Taller1_BigData_MachineLearning/Visuales/Grafica_densidad.pdf",
+       plot = G_2, width = 7, height = 5)
+
+
+```
+
+
+```{r}
+
+#Graficamos por violin
+G_3 <- ggplot(datos_lim, aes(x = max_educ_level, y = log_ingreso_hora, fill = sex_label)) +
+  geom_violin(alpha = 0.6, trim = FALSE, position = position_dodge(width = 0.9)) +  # violines por sexo
+  geom_boxplot(width = 0.15, outlier.size = 0.8, alpha = 0.7, 
+               position = position_dodge(width = 0.9)) + # boxplot dentro
+  scale_fill_manual(values = c("Mujer" = "#E07B91", "Hombre" = "#6BAED6")) +
   labs(
-    title = "Salario horario por nivel educativo",
-    subtitle = "Comparación entre trabajadores formales e informales",
-    x = "Nivel educativo",
-    y = "Logaritmo del ingreso por hora"
+    title = "Distribución del log(Ingreso por hora) según nivel educativo",
+    subtitle = "Comparación entre hombres y mujeres",
+    x = "Nivel educativo máximo alcanzado",
+    y = "Log(Ingreso por hora)",
+    fill = "Sexo"
   ) +
-  theme_minimal(base_size = 13) +
+  theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", size = 16),
-    plot.subtitle = element_text(size = 12, margin = margin(b = 10)),
-    legend.position = "top",
-    legend.title = element_text(face = "bold"),
-    axis.title = element_text(face = "bold")
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, face = "italic"),
+    axis.text.x = element_text(angle = 30, hjust = 1),
+    legend.position = "top"
   )
+
+
+# Exportamos la grafica
+
+ggsave("C:/Users/ASUS/OneDrive - Universidad de los andes/Taller1_BigData_MachineLearning/Visuales/Grafica_violin.pdf",
+       plot = G_3, width = 7, height = 5)
+
 
 ```
 
 ```{r}
 
-# Calcular proporciones
-porcentajes <- datos_lim %>%
-  count(formal) %>%
-  mutate(
-    prop = n / sum(n),
-    label = paste0(round(prop * 100, 1), "%"),
-    formal = factor(formal, levels = c(0, 1), labels = c("No formal", "Formal"))
+#Graficamos con boxplot
+G_4<-ggplot(datos_lim, aes(x = relab, y = log_ingreso_hora, fill = sex_label)) +
+  geom_boxplot(alpha = 0.7, position = position_dodge(width = 0.9)) +
+  scale_fill_manual(values = c("Mujer" = "#E07B91", "Hombre" = "#6BAED6")) +
+  labs(
+    title = "Log(Ingreso por hora) según tipo de trabajo",
+    subtitle = "Comparación entre mujeres y hombres",
+    x = "Tipo de trabajo",
+    y = "Log(Ingreso por hora)",
+    fill = "Sexo"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5, face = "italic"),
+    axis.text.x = element_text(angle = 25, hjust = 1),
+    legend.position = "top"
   )
 
-# Gráfico
-ggplot(datos_lim, aes(x = factor(formal, levels = c(0, 1), labels = c("No formal", "Formal")))) +
-  geom_bar(fill = "#4682B4", width = 0.6) +
-  geom_text(
-    data = porcentajes,
-    aes(x = formal, y = n, label = label),
-    vjust = -0.4,
-    color = "gray20"
-  ) +
-  labs(
-    title = "Distribución de la formalidad laboral",
-    subtitle = "Comparación entre trabajadores formales e informales",
-    x = "Condición laboral",
-    y = "Frecuencia"
-  ) +
-  theme_minimal(base_size = 13) +
-  theme(
-    plot.title = element_text(face = "bold", size = 16),
-    plot.subtitle = element_text(size = 12, margin = margin(b = 10)),
-    axis.title = element_text(face = "bold"),
-    axis.text = element_text(color = "gray20"),
-    panel.grid.minor = element_blank()
-  )
+# Exportamos la grafica
+
+ggsave("C:/Users/ASUS/OneDrive - Universidad de los andes/Taller1_BigData_MachineLearning/Visuales/Grafica_boxplot.pdf",
+       plot = G_4, width = 7, height = 5)
+
+
 
 ```
+
 
 # 3. Perfil edad-salario
 
@@ -566,47 +592,61 @@ $$
 Crear la variable edad al cuadrado para el analisis
 ```{r}
 
+# Se crea una nueva variable age2 que corresponde a la edad al cuadrado,
 datos_lim <- datos_lim %>%
   mutate(age2 = age^2) %>%
   filter(complete.cases(age, log_ingreso_hora, age2))
+
+# Se estima una regresión lineal donde la variable dependiente es
+# el logaritmo del ingreso por hora y las independientes son
+# la edad y la edad al cuadrado.
 age_wage_reg <- lm(log_ingreso_hora ~ age + age2, data = datos_lim)
+
+# Sresumen de la regresión
 summary(age_wage_reg)
+
 
 ```
 
 ## Bootstrap
 
 ```{r}
+# Se fija una semilla para que los resultados sean reproducibles.
 set.seed(10101)
 
+# Se extraen los coeficientes estimados de la regresión
 b <- coef(age_wage_reg)
-peak_hat <- - b["age"]/(2*b["age2"])
 
-B <- 1000
+# Se calcula la edad en la que el ingreso es máximo.
+peak_hat <- - b["age"] / (2 * b["age2"])
+
+# Se define el número de réplicas (B) para un procedimiento de remuestreo,
+B <- 1000 
+
+# número de observaciones
 n <- nrow(datos_lim)
 n
 
 ```
 
 ```{r}
+# Se fija una semilla
 set.seed(10101)
+
+# Se ejecuta un procedimiento de bootstrap para estimar la distribución
 boot_peak <- replicate(B, {
   idx <- sample.int(n, size = n, replace = TRUE)
   fit <- lm(log_ingreso_hora ~ age + age2, data = datos_lim[idx, ])
   bb  <- coef(fit)
-<<<<<<< Updated upstream
-  if (is.na(bb["age2"]) || abs(bb["age2"]) < 1e-10) return(NA_real_)
-  - bb["age"] / (2*bb["age2"])
-=======
-  # Control básico: si age2 no se estima bien o ~0, no puedo calcular el vértice.
-  if (is.na(bb["age2"]) || abs(bb["age2"]) < 1e-10) return(NA_real_)
-  #calculo del pico
-  - bb["age"] / (2*bb["age2"]) 
->>>>>>> Stashed changes
+  if (is.na(bb["age2"]) || abs(bb["age2"]) < 1e-10) return(NA_real_) #control de errores
+  - bb["age"] / (2*bb["age2"]) #calculo del pico
 })
+
+# Se eliminan los valores infinitos o NA de la distribución bootstrap,
 boot_peak <- boot_peak[is.finite(boot_peak)]
 
 ```
+
 
 ```{r}
 set.seed(10101)
