@@ -2,8 +2,8 @@
 Taller1_BigData_MachineLearning: Predicción de Ingresos (GEIH 2018 - Bogotá)
 
 ## 📌 Descripción
-Este repositorio contiene el trabajo del **Taller1_BigData_MachineLearning** de Econometría Aplicada (Maestría en Economía Aplicada).  
-El objetivo es **estimar y predecir salarios horarios** en Bogotá usando la **GEIH 2018**.  
+Este repositorio contiene el desarollo del **Taller1_BigData_MachineLearning** (Maestría en Economía Aplicada - Universidad de Los Andes).  
+El objetivo es **estimar y predecir salarios por hora** en Bogotá usando la **GEIH 2018**.  
 El análisis incluye:
 - Perfil edad–salario.  
 - Brecha salarial de género (incondicional y condicional, FWL y bootstrap).  
@@ -15,14 +15,9 @@ El repositorio incluye:
 - Documentos complementarios  ---->    # Datos del DANE_PobrezaMonetaria y Formulación del trabajo a desarrollar
 - RMARKDOW   ---->    # Carpeta con el script del desarrollo de los puntos
 - Slides ---->              # Carpeta con las presentaciones
-- Output      ---->        # Carpeta con tablas y gráficos finales
+- Visuales      ---->        # Carpeta con tablas y gráficos finales
+- Documento final ---->  # Carpeta con el documento consolidado, incluye tablas, gráficas y los análisis correspondientes.
 
-## 🔄 Cómo correr el proyecto
-1. Clonar el repositorio:
-   ```bash
-   git clone https://github.com/LauraDaniela17/Taller1_BigData_MachineLearning.git
-   cd Taller1_BigData_MachineLearning
-  
 ## 📊 Resultados principales
 - El salario crece con la edad hasta un pico cercano a los 50 años.
 - Existe brecha salarial de género, que se reduce al controlar por educación y ocupación, pero no desaparece.
