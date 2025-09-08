@@ -833,6 +833,34 @@ results <- data.frame(
 results
 ```
 
+## 4.C
+
+Se construyó un gráfico del perfil edad-ingreso por género.  
+El gráfico muestra:
+
+- **Puntos de dispersión**: relación entre edade ingresos en logaritmos 
+- **Curvas ajustadas cuadráticas**: se estimaron modelos polinomiales que permiten ver los picos en la relación ingreso edad.  
+- **Intervalos de confianza**: acompañan a cada curva.
+
+```{r}
+# Gráfico: edad vs log(ingreso) por género
+G_1 <- ggplot(datos_lim, aes(x = age, y = log_ingreso_hora, color = sex_label)) +
+  geom_point(alpha = 0.2) +                               
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2),     # ajuste cuadrático con banda
+              se = TRUE, size = 1) +
+  theme_bw() +
+  labs(x = "Edad", y = "Log(Ingreso por hora)",
+       color = "Género", title = "Perfil Edad–Salario por género (log)")
+G_1
+
+# Guardar en PDF (7x5 pulgadas)
+# Exportar a PDF
+pdf("grafica_perfil_salario.pdf", width = 8, height = 6)
+print(G_1)
+dev.off()
+
+```
+
 
 # 5. Predicción
 
