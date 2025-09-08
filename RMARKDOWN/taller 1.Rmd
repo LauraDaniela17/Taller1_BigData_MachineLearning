@@ -594,8 +594,15 @@ boot_peak <- replicate(B, {
   idx <- sample.int(n, size = n, replace = TRUE)
   fit <- lm(log_ingreso_hora ~ age + age2, data = datos_lim[idx, ])
   bb  <- coef(fit)
+<<<<<<< Updated upstream
   if (is.na(bb["age2"]) || abs(bb["age2"]) < 1e-10) return(NA_real_)
   - bb["age"] / (2*bb["age2"])
+=======
+  # Control básico: si age2 no se estima bien o ~0, no puedo calcular el vértice.
+  if (is.na(bb["age2"]) || abs(bb["age2"]) < 1e-10) return(NA_real_)
+  #calculo del pico
+  - bb["age"] / (2*bb["age2"]) 
+>>>>>>> Stashed changes
 })
 boot_peak <- boot_peak[is.finite(boot_peak)]
 
@@ -603,13 +610,16 @@ boot_peak <- boot_peak[is.finite(boot_peak)]
 
 ```{r}
 set.seed(10101)
+
+# IC al 95% por percentiles del bootstrap (2.5% y 97.5%).
 ci_perc <- quantile(boot_peak, c(0.025, 0.975), na.rm = TRUE)
 
 # Percentiles sin nombres para evitar problemas de rownames
 valid <- is.finite(boot_peak)
 ci_perc <- quantile(boot_peak[valid], c(0.025, 0.975), na.rm = TRUE, names = FALSE)
 
-ci_perc #Intervalo de confianza
+# Muestra el intervalo [LI, LS].
+ci_perc
 
 ```
 
