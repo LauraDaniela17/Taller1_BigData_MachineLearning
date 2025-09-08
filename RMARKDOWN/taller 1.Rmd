@@ -1,13 +1,13 @@
 ---
 title: "Taller 1 BDML"
-author: Zeneth Olivero Tapia, Cristian Felipe Muñoz Guerrero, Laura Daniela Torres
-  Diaz, Vivian Cabanzo Fernandez
+author: Zeneth Olivero Tapia, Cristian Felipe Muñoz Guerrero, Laura Daniela Torres, Vivian Cabanzo Fernandez
 date: "`r Sys.Date()`"
 output: pdf_document
 editor_options: 
   markdown: 
     wrap: sentence
 ---
+
 
 ## Configuración 
 
