@@ -14,7 +14,7 @@ El análisis incluye:
 El repositorio incluye:
 - Documentos complementarios  ---->    # Datos del DANE_PobrezaMonetaria y Formulación del trabajo a desarrollar
 - RMARKDOW   ---->    # Carpeta con el script del desarrollo de los puntos
-- Slides ---->              # Carpeta con las presentaciones
+- Presentaciones ---->              # Carpeta con las presentaciones
 - Visuales      ---->        # Carpeta con tablas y gráficos finales
 - Documento final ---->  # Carpeta con el documento consolidado, incluye tablas, gráficas y los análisis correspondientes.
 
