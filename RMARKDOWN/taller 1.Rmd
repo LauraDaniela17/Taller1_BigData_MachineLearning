@@ -787,61 +787,131 @@ results <- data.frame(
 )
 results
 ```
-Fin Z 
+Fin ZZ
 
 # 5. Predicción
 
 Análisis de la tabla utilizada para verificar los modelos de prediccion 
 ```{r}
 head(datos_lim)
-names(datos_lim)
+```
+```{r}
+# Crear tabla con nombres de variables
+tabla_variables <- data.frame(
+  Numero = seq_along(names(datos_lim)),
+  Nombre_Variable = names(datos_lim),
+  stringsAsFactors = FALSE
+)
+
+# Mostrar tabla
+print(tabla_variables)
 ```
 
 
 ```{r}
 # Calcular el ancho de banda (binwidth) usando la regla de Scott
+# Calcular el ancho de banda (binwidth) usando la regla de Scott
 num_binwidth <- 3.5 * sd(datos_lim$ingreso_hora_1) / length(datos_lim$ingreso_hora_1)^(1/3)
 num_binwidth <- round(x = num_binwidth, digits = 2)
 
-a<- ggplot(datos_lim, aes(x = ingreso_hora_1 )) +
-  geom_histogram(mapping = aes(y = (after_stat(count))/sum(after_stat(count))), 
-                 color ="#FFFFFF", fill= "sandybrown", show.legend = FALSE, na.rm = TRUE, 
-                 binwidth = num_binwidth, linewidth = 0.2, alpha = 0.8, closed = 'left') +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), 
-                     labels = scales::label_number(scale = 100)) +
+# Crear el dataframe para las líneas
+lineas <- data.frame(
+  tipo = c("Mediana", "Media"),
+  valor = c(median(datos_lim$ingreso_hora_1, na.rm = TRUE),
+            mean(datos_lim$ingreso_hora_1, na.rm = TRUE))
+)
+
+# Graficar
+a <- ggplot(datos_lim, aes(x = ingreso_hora_1)) +
+  geom_histogram(
+    aes(y = after_stat(count) / sum(after_stat(count))),
+    binwidth = num_binwidth,
+    fill = "sandybrown", color = "#FFFFFF", linewidth = 0.2,
+    alpha = 0.8, closed = 'left', na.rm = TRUE
+  ) +
+  geom_vline(data = lineas, aes(xintercept = valor, color = tipo, linetype = tipo), linewidth = 0.9) +
+  scale_color_manual(values = c("Mediana" = "darkturquoise", "Media" = "red")) +
+  scale_linetype_manual(values = c("Mediana" = "solid", "Media" = "dashed")) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = scales::label_number(scale = 100)
+  ) +
   scale_x_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, NA)) +
-  geom_vline(xintercept = median(datos_lim$ingreso_hora_1, na.rm = TRUE), color = 'darkturquoise', linetype = 'solid') +
-  geom_vline(xintercept = mean(datos_lim$ingreso_hora_1, na.rm = TRUE), color = 'red', linetype = 'dashed') +
-  labs(x = "ingreso_hora_1", y = "Percent (%)") +
-  theme_classic() 
+  labs(
+    title = "Distribución del Ingreso por Hora (ingreso_hora_1)",
+    x = "Ingreso por hora",
+    y = "Porcentaje (%)",
+    color = "Línea de referencia",
+    linetype = "Línea de referencia"
+  ) +
+  theme_classic() +
+  theme(
+    legend.position = "top",
+    legend.title = element_text(face = "bold")
+  )
+
 a
+
 ```
 
 ```{r}
+# Calcular binwidth con la regla de Scott
 num_binwidth <- 3.5 * sd(datos_lim$log_ingreso_hora) / length(datos_lim$log_ingreso_hora)^(1/3)
-num_binwidth <- round(x = num_binwidth, digits = 2)
+num_binwidth <- round(num_binwidth, 2)
 
+# Crear dataframe con líneas de media y mediana
+lineas_log <- data.frame(
+  tipo = c("Mediana", "Media"),
+  valor = c(
+    median(datos_lim$log_ingreso_hora, na.rm = TRUE),
+    mean(datos_lim$log_ingreso_hora, na.rm = TRUE)
+  )
+)
 
+# Construir gráfico con leyenda
 b <- ggplot(datos_lim, aes(x = log_ingreso_hora)) +
-  geom_histogram(mapping = aes(y = (after_stat(count))/sum(after_stat(count))), 
-                 color ="#FFFFFF", fill= "sandybrown", show.legend = FALSE, na.rm = TRUE, 
-                 binwidth = num_binwidth, linewidth = 0.2, alpha = 0.8, closed = 'left') +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), 
-                     labels = scales::label_number(scale = 100)) +
+  geom_histogram(
+    aes(y = after_stat(count) / sum(after_stat(count))),
+    binwidth = num_binwidth,
+    fill = "sandybrown", color = "#FFFFFF", linewidth = 0.2,
+    alpha = 0.8, closed = 'left', na.rm = TRUE
+  ) +
+  geom_vline(data = lineas_log, aes(xintercept = valor, color = tipo, linetype = tipo), linewidth = 0.9) +
+  scale_color_manual(values = c("Mediana" = "darkturquoise", "Media" = "red")) +
+  scale_linetype_manual(values = c("Mediana" = "solid", "Media" = "dashed")) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05)),
+    labels = scales::label_number(scale = 100)
+  ) +
   scale_x_continuous(expand = expansion(mult = c(0, 0)), limits = c(0, NA)) +
-  geom_vline(xintercept = median(datos_lim$log_ingreso_hora, na.rm = TRUE), color = 'darkturquoise', linetype = 'solid') +
-  geom_vline(xintercept = mean(datos_lim$log_ingreso_hora, na.rm = TRUE), color = 'red', linetype = 'dashed') +
-  labs(x = "Log Ingreso Por hora", y = "Percent (%)") +
-  theme_classic() 
+  labs(
+    title = "Distribución del Log Ingreso por Hora",
+    x = "Log Ingreso Por hora",
+    y = "Porcentaje (%)",
+    color = "Línea de referencia",
+    linetype = "Línea de referencia"
+  ) +
+  theme_classic() +
+  theme(
+    legend.position = "top",
+    legend.title = element_text(face = "bold")
+  )
+
 b
+
 ```
 
 Visualización de histogramas de salario por hora y logaritmo de salario por hora
 
 ```{r}
 grid.arrange(a,b, nrow = 2)
+
+# Exportar como PDF
+pdf("hist_ingresos_comparados.pdf", width = 8, height = 8)
+grid.arrange(a, b, nrow = 2)
+dev.off()
 ```
-como se observa en los histogramas anteriores la distribucion de ingreso por hora tiene muy marcada la cola a la derecha, por esta razon se elegirá el logaritmo del ingreso por hora.
+como se observa en los histogramas, la distribucion de ingreso por hora tiene muy marcada la cola a la derecha, por esta razon se elegirá el logaritmo del ingreso por hora.
 
 ```{r}
 skim(datos_lim)
@@ -855,34 +925,45 @@ sapply(datos_lim, class)
 Establecer Muestra de entrenamiento (70%) y de prueba (30%)
 
 ```{r}
-set.seed(10101)  # Semilla para propositos de replicabilidad
+# Semilla para replicabilidad
+set.seed(10101)
 
-
+# Crear partición de entrenamiento y prueba
 inTrain <- createDataPartition(
-  y = datos_lim$log_ingreso_hora,  #especificar los datos requeridos
-  p = .70, # Porcentaje muestra de entrenamiento
+  y = datos_lim$log_ingreso_hora,
+  p = 0.70,
   list = FALSE
 )
+
 training <- datos_lim |> filter(row_number() %in% inTrain)
 testing  <- datos_lim |> filter(!(row_number() %in% inTrain))
 
-# Crear datos para visualizacion
+# Crear datos para visualización
 split_data <- data.frame(
   Split = factor(c("Muestra de Entrenamiento", "Muestra de Prueba")),
   Count = c(nrow(training), nrow(testing)),
   Percentage = c(nrow(training)/nrow(datos_lim)*100, nrow(testing)/nrow(datos_lim)*100)
 )
 
-# Visualizacion de las muestras de entrenamiento y prueba
-ggplot(split_data, aes(x = Split, y = Count)) +
+# CREAR EL GRÁFICO
+grafico_split <- ggplot(split_data, aes(x = Split, y = Count)) +
   geom_bar(stat = "identity", fill = "darkturquoise", width = 0.5) +
-  geom_text(aes(label = paste0(round(Percentage, 1), "%\n(n = ", Count, ")")), 
+  geom_text(aes(label = paste0(round(Percentage, 1), "%\n(n = ", Count, ")")),
             vjust = -0.5, color = "black", size = 4) +
   labs(title = "Distribución de la muestra de entrenamiento y de prueba",
-       y = "Numero de Observaciones",
+       y = "Número de Observaciones",
        x = "") +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) + #Escala de las etiquetas
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
   theme_classic()
+
+# MOSTRAR EN R
+print(grafico_split)
+
+# EXPORTAR A PDF
+pdf("grafico_split_muestra.pdf", width = 8, height = 6)
+print(grafico_split)
+dev.off()
+
 ```
 
 ## 5.b Predicción en términos de RMSE
@@ -922,8 +1003,9 @@ cat("El RMSE del Modelo 2 es:", round(score2a, 4), "\n")
 - VSA - MODELO 3
 
 $$
-\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + \beta_3 \cdot \text{age} + \beta_4 \cdot \text{age}^2 + \beta_5 \cdot \text{educ} + \beta_6 \cdot \text{relab} + \beta_7 \cdot \text{formal} + \beta_8 \cdot \text{size_firm} + u
+\ln(w) =\beta_1 + \beta_2 \cdot \text{sex} + \beta_3 \cdot \text{age} + \beta_4 \cdot \text{age}^2 + \beta_5 \cdot \text{educ} + \beta_6 \cdot \text{relab} + \beta_7 \cdot \text{formal} + \beta_8 \cdot \text{size_firm} + u
 $$
+
 
 
 ```{r}
@@ -955,6 +1037,13 @@ cat("El RMSE del Modelo 4 es:", round(score4a, 4), "\n")
 ```
 
  - VSA - MODELO 5
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{sex} + \beta_3 \cdot \text{educ} + \beta_4 \cdot (\text{sex} \cdot \text{educ}) + \beta_5 \cdot \text{age} + u
+$$
+
+
+
 ```{r}
 form_5 <- log_ingreso_hora ~ sex * max_educ_level + age
 modelo5a <- lm(form_5,
@@ -968,6 +1057,11 @@ cat("El RMSE del Modelo 5 es:", round(score5a, 4), "\n")
 
  - VSA - MODELO 6
 
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{age} + \beta_3 \cdot \text{relab} + u
+$$
+
+
 ```{r}
 
 form_6 <- log_ingreso_hora ~ age + relab
@@ -980,6 +1074,11 @@ cat("El RMSE del Modelo 6 es:", round(score6a, 4), "\n")
 ```
 
   - VSA - MODELO 7
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{age} + \beta_3 \cdot \text{formal} + \beta_3 \cdot \text{educ} + \beta_4 \cdot (\text{formal} \cdot \text{educ}) + u
+$$
+
 ```{r}
 form_7 <- log_ingreso_hora ~ age + formal * max_educ_level
 modelo7a <- lm(form_7,
@@ -991,9 +1090,12 @@ score7a <- RMSE(pred = predictions, obs = testing$log_ingreso_hora)
 cat("El RMSE del Modelo 7 es:", round(score7a, 4), "\n")
 ```
 
-
-
  - VSA - MODELO 8
+
+$$
+\ln(w) = \beta_1 + \beta_2 \cdot \text{educ} + \beta_3 \cdot \text{relab} + \beta_3 \cdot (\text{educ} \cdot \text{relab}) + \beta_5 \cdot \text{age} + u
+$$
+
 ```{r}
 form_8 <- log_ingreso_hora ~ max_educ_level * relab + age
 modelo8a <- lm(form_8,
@@ -1027,8 +1129,8 @@ tabla_rmse <- data.frame(
 # Ver tabla
 print(tabla_rmse)
 
-
 ```
+
 
 - K-FOLD
 ```{r}
@@ -1262,7 +1364,7 @@ cat("RMSE LOOCV del Modelo 7:", round(rmse_loocv7, 4), "\n")
 ```
 ```{r}
 ## Store the RMSE in dataframe
-ResultadosRMSE<- data.frame( Modelo = c(1, 2),
+ResultadosRMSE<- data.frame( Modelo = c(3, 7),
                     RMSE_vsa1= c(score3a, score7a), 
                     RMSE_kfold1= c(score3b, score7b),
                     RMSE_loocv1= c(rmse_loocv3,
@@ -1273,20 +1375,41 @@ ResultadosRMSE
 ```
 
 ```{r}
-## let's change the way of saving the data.
+## Visualización
 
 RMSE_vsa2   <-  c(score3a, score7a) 
 RMSE_kfold2 <-  c(score3b, score7b)
 RMSE_loocv2 <-  c(rmse_loocv3, rmse_loocv7)
 
 
-scores3 <- data.frame( Modelo = rep(c(1, 2),3),
+scores3 <- data.frame( Modelo = rep(c(3, 7),3),
                      Approach= c(rep("VSA",4),rep("K-Fold",4),rep("LOOCV",4)),
                      RMSE= c(RMSE_vsa2, RMSE_kfold2, RMSE_loocv2)
                     )
 
-ggplot(scores3, ) + 
-  geom_line(aes(x=Modelo,y=RMSE,col=Approach), size=0.5)+
-  theme_bw() 
+# Crear gráfico
+RMSE <- ggplot(scores3) + 
+  geom_line(aes(x = Modelo, y = RMSE, col = Approach), size = 0.8) +
+  labs(
+    title = "Comparación del RMSE entre los Modelos 3 y 7",
+    x = "Modelo",
+    y = "RMSE",
+    color = "Método de Validación"
+  ) +
+  theme_bw() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
+    axis.title = element_text(face = "bold"),
+    legend.title = element_text(face = "bold")
+  )
+
+# Mostrar gráfico en R
+print(RMSE)
+
+# Exportar a PDF
+pdf("RMSE.pdf", width = 8, height = 6)
+print(RMSE)
+dev.off()
+
 ```
 
