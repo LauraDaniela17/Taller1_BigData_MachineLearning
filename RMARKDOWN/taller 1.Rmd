@@ -504,7 +504,6 @@ datasummary_balance(
 ```
 
 
-
 ```{r}
 
 # Grafica de densidad
@@ -513,10 +512,13 @@ G_2 <- ggplot(datos_lim, aes(x = log_ingreso_hora, fill = sex_label)) +
   labs(title = "Distribución del logaritmo del ingreso por hora por sexo",
        x = "Log(Ingreso por hora)", y = "Densidad", fill = "Sexo")
 
-# Guardar en PDF (7x5 pulgadas)
-ggsave("C:/Users/ASUS/OneDrive - Universidad de los andes/Taller1_BigData_MachineLearning/Visuales/Grafica_densidad.pdf",
-       plot = G_2, width = 7, height = 5)
+# Mostrar gráfico en R
+print(G_2)
 
+# Exportar a PDF
+pdf("DistribucionLogIngresoxhora.pdf", width = 8, height = 6)
+print(G_2)
+dev.off()
 
 ```
 
@@ -544,12 +546,13 @@ G_3 <- ggplot(datos_lim, aes(x = max_educ_level, y = log_ingreso_hora, fill = se
     legend.position = "top"
   )
 
+# Mostrar gráfico en R
+print(G_3)
 
-# Exportamos la grafica
-
-ggsave("C:/Users/ASUS/OneDrive - Universidad de los andes/Taller1_BigData_MachineLearning/Visuales/Grafica_violin.pdf",
-       plot = G_3, width = 7, height = 5)
-
+# Exportar a PDF
+pdf("VIOLIN.pdf", width = 8, height = 6)
+print(G_3)
+dev.off()
 
 ```
 
@@ -574,10 +577,13 @@ G_4<-ggplot(datos_lim, aes(x = relab, y = log_ingreso_hora, fill = sex_label)) +
     legend.position = "top"
   )
 
-# Exportamos la grafica
+# Mostrar gráfico en R
+print(G_4)
 
-ggsave("C:/Users/ASUS/OneDrive - Universidad de los andes/Taller1_BigData_MachineLearning/Visuales/Grafica_boxplot.pdf",
-       plot = G_4, width = 7, height = 5)
+# Exportar a PDF
+pdf("boxplot.pdf", width = 8, height = 6)
+print(G_4)
+dev.off()
 
 
 
@@ -602,7 +608,7 @@ datos_lim <- datos_lim %>%
 # la edad y la edad al cuadrado.
 age_wage_reg <- lm(log_ingreso_hora ~ age + age2, data = datos_lim)
 
-# Sresumen de la regresión
+# resumen de la regresión
 summary(age_wage_reg)
 
 
@@ -688,7 +694,6 @@ kbl(tabla_peak, format = "latex", booktabs = TRUE,
 
 ```
 
-Inicio Z
 
 # 4.Brecha Salarial de género
 
