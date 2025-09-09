@@ -833,7 +833,7 @@ results <- data.frame(
 results
 ```
 
-## 4.C
+## 4.c Gráfica brecha - salarial
 
 Se construyó un gráfico del perfil edad-ingreso por género.  
 El gráfico muestra:
